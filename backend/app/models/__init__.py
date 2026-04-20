@@ -1,3 +1,14 @@
+from app.models.ai_entities import (
+    AIAgentRun,
+    AIAlertRule,
+    AIAnalysisJob,
+    AIAuditLog,
+    AIProviderConfig,
+    AIStockAnalysis,
+    AIStockAnalysisFactor,
+    AIStockSourceRef,
+    AIWatchlistSetting,
+)
 from app.models.entities import (
     Alert,
     Fundamental,
@@ -11,6 +22,15 @@ from app.models.entities import (
 )
 
 __all__ = [
+    "AIAgentRun",
+    "AIAlertRule",
+    "AIAnalysisJob",
+    "AIAuditLog",
+    "AIProviderConfig",
+    "AIStockAnalysis",
+    "AIStockAnalysisFactor",
+    "AIStockSourceRef",
+    "AIWatchlistSetting",
     "Alert",
     "Fundamental",
     "PortfolioHolding",
@@ -21,4 +41,3 @@ __all__ = [
     "Watchlist",
     "WatchlistItem",
 ]
-
