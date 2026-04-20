@@ -164,11 +164,16 @@ class MarketService:
             "page_size": page_size,
         }
 
-    async def get_price_history(self, symbol: str) -> list[dict]:
+    async def get_price_history(
+        self,
+        symbol: str,
+        period: str = "1y",
+        interval: str = "1d",
+    ) -> list[dict]:
         stock = (await self.session.execute(select(Stock).where(Stock.symbol == symbol))).scalar_one_or_none()
         if not stock:
             return []
-        return await self.yfinance.get_history(symbol, stock.exchange, period="1y", interval="1d")
+        return await self.yfinance.get_history(symbol, stock.exchange, period=period, interval=interval)
 
     async def get_options_chain(self, symbol: str, exchange: str) -> dict:
         if exchange.upper() == "NSE":
@@ -255,4 +260,3 @@ def _oi_change(chain: dict) -> float | None:
     if normalized <= 0:
         return None
     return round((normalized / 100_000.0) * 100.0, 3)
-

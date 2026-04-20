@@ -25,6 +25,7 @@ class Settings:
     basic_auth_password: str | None
     yfinance_hourly_limit: int
     alpha_vantage_minute_limit: int
+    api_rate_limit_per_minute: int
 
 
 @lru_cache(maxsize=1)
@@ -52,5 +53,5 @@ def get_settings() -> Settings:
         basic_auth_password=os.getenv("BASIC_AUTH_PASSWORD"),
         yfinance_hourly_limit=int(os.getenv("YFINANCE_HOURLY_LIMIT", "2000")),
         alpha_vantage_minute_limit=int(os.getenv("ALPHA_VANTAGE_MINUTE_LIMIT", "5")),
+        api_rate_limit_per_minute=int(os.getenv("API_RATE_LIMIT_PER_MINUTE", "120")),
     )
-

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import base64
 import secrets
+import time
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,6 +25,15 @@ from app.services.scheduler_service import create_scheduler
 
 
 settings = get_settings()
+
+
+@dataclass
+class RequestBucket:
+    tokens: float
+    last_refill: float
+
+
+_request_buckets: dict[str, RequestBucket] = {}
 
 
 async def _initialize_data() -> None:
@@ -107,6 +118,36 @@ def _auth_required_response():
         headers={"WWW-Authenticate": "Basic"},
         content="Authentication required",
     )
+
+
+@app.middleware("http")
+async def endpoint_rate_limiter(request: Request, call_next):
+    path = request.url.path
+    if path.endswith("/health") or path.startswith("/docs") or path.startswith("/openapi"):
+        return await call_next(request)
+
+    capacity = float(settings.api_rate_limit_per_minute)
+    refill_per_second = capacity / 60.0
+    key = request.client.host if request.client else "unknown"
+    now = time.monotonic()
+    bucket = _request_buckets.get(key)
+    if bucket is None:
+        bucket = RequestBucket(tokens=capacity, last_refill=now)
+        _request_buckets[key] = bucket
+
+    elapsed = now - bucket.last_refill
+    bucket.tokens = min(capacity, bucket.tokens + elapsed * refill_per_second)
+    bucket.last_refill = now
+
+    if bucket.tokens < 1.0:
+        from starlette.responses import JSONResponse
+
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Rate limit exceeded. Please retry shortly."},
+        )
+    bucket.tokens -= 1.0
+    return await call_next(request)
 
 
 app.include_router(health_router, prefix=settings.api_prefix)

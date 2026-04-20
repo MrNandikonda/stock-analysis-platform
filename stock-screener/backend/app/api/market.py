@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
@@ -44,9 +45,14 @@ async def refresh_market_data(
 
 
 @router.get("/history/{symbol}", response_model=list[HistoryItem])
-async def price_history(symbol: str, session: AsyncSession = Depends(get_db_session)) -> list[dict]:
+async def price_history(
+    symbol: str,
+    period: str = Query(default="1y"),
+    interval: str = Query(default="1d"),
+    session: AsyncSession = Depends(get_db_session),
+) -> list[dict]:
     service = MarketService(session)
-    return await service.get_price_history(symbol=symbol.upper())
+    return await service.get_price_history(symbol=symbol.upper(), period=period, interval=interval)
 
 
 @router.get("/options/{symbol}")
@@ -70,7 +76,7 @@ async def stream_quotes(
     async def event_gen():
         while True:
             payload = await service.get_quotes(market=market, page=1, page_size=50)
-            payload["server_time_utc"] = asyncio.get_running_loop().time()
+            payload["server_time_utc"] = datetime.now(tz=timezone.utc).isoformat()
             yield f"data: {json.dumps(payload)}\n\n"
             await asyncio.sleep(30)
 

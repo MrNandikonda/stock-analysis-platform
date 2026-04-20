@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  backend:
+    image: stock-screener-backend:alpine
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: stock-screener-backend
+    mem_limit: 768m
+    cpus: 1.5
+    env_file:
+      - ./.env
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./data/stocks.db
+      - RUN_SCHEDULER_IN_API=false
+    volumes:
+      - screener_data:/app/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  scheduler:
+    image: stock-screener-backend:alpine
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: stock-screener-scheduler
+    mem_limit: 256m
+    cpus: 0.5
+    env_file:
+      - ./.env
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./data/stocks.db
+      - RUN_SCHEDULER_IN_API=false
+    command: ["python", "-m", "app.scheduler_runner"]
+    volumes:
+      - screener_data:/app/data
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  frontend:
+    image: stock-screener-frontend:nginx-alpine
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api/v1
+    container_name: stock-screener-frontend
+    mem_limit: 128m
+    cpus: 0.5
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+volumes:
+  screener_data:
+
