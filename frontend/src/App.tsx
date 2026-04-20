@@ -6,6 +6,7 @@ import { ChartsPage } from "@/pages/ChartsPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { NewsPage } from "@/pages/NewsPage";
 import { PortfolioPage } from "@/pages/PortfolioPage";
+import { AIDiagnosticsPage } from "@/pages/AIDiagnosticsPage";
 import { ScreenerPage } from "@/pages/ScreenerPage";
 import { WatchlistsPage } from "@/pages/WatchlistsPage";
 
@@ -23,6 +24,8 @@ const renderTab = (tab: AppTab) => {
       return <PortfolioPage />;
     case "news":
       return <NewsPage />;
+    case "diagnostics":
+      return <AIDiagnosticsPage />;
     default:
       return <DashboardPage />;
   }
@@ -36,4 +39,3 @@ function App() {
 }
 
 export default App;
-

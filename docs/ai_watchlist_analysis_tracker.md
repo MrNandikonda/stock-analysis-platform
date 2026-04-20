@@ -41,14 +41,14 @@ AI feature objective:
 |---|---|---|---|---|
 | 1 | Repo analysis and plan | Completed | 2026-04-20 | Architecture mapped, extension points identified |
 | 2 | Data model + migrations | Completed | 2026-04-20 | Added AI schema migration + ORM + persistence service |
-| 3 | Provider abstraction | Pending | - | Base provider + OpenAI provider + health checks |
-| 4 | Schemas + tool registry | Pending | - | Typed contracts and validation pipeline |
-| 5 | Initial specialists | Pending | - | News/Fundamentals/Technicals agents |
-| 6 | Orchestrator | Pending | - | Batch processing and synthesis |
-| 7 | Scheduler integration | Pending | - | Cadence jobs, retries, stale handling |
-| 8 | Frontend UI | Pending | - | Watchlist settings, stock AI panels, diagnostics |
-| 9 | Additional specialists | Pending | - | Remaining domain agents + ops agent |
-| 10 | Tests and polish | Pending | - | Docs, graceful degradation, test coverage |
+| 3 | Provider abstraction | Completed | 2026-04-20 | OpenAI + local-summary providers, registry, status wiring |
+| 4 | Schemas + tool registry | Completed | 2026-04-20 | Central contracts, typed tools, validation path |
+| 5 | Initial specialists | Completed | 2026-04-20 | News/Fundamentals/Technicals live with heuristic + LLM path |
+| 6 | Orchestrator | Completed | 2026-04-20 | Watchlist batching, aggregation, persistence |
+| 7 | Scheduler integration | Completed | 2026-04-20 | Due-job scan + stale cleanup added to scheduler |
+| 8 | Frontend UI | Completed | 2026-04-20 | Watchlist AI controls, stock detail, diagnostics page |
+| 9 | Additional specialists | Completed | 2026-04-20 | Geo/regulation/events/options/sector/portfolio/source health/webapp ops |
+| 10 | Tests and polish | In Progress | 2026-04-20 | Tests/docs/env updated; final runtime validation in progress |
 
 ## Full Implementation Roadmap
 
@@ -87,6 +87,82 @@ Validation checkpoints:
 - Migration apply success on clean DB
 - Tables/indexes present
 - Backend imports/compile checks pass
+
+Status:
+- Completed on 2026-04-20
+
+### Phase 3 - Provider Abstraction
+
+Objectives:
+- Add provider interface for LLM integrations
+- Implement OpenAI Responses API provider (v1)
+- Add env-driven model/provider config and provider health checks
+
+Status:
+- Completed on 2026-04-20
+
+### Phase 4 - Schemas + Tool Registry
+
+Objectives:
+- Define central typed schemas for specialist outputs and final aggregated analysis
+- Add narrow typed internal tools for data retrieval and controlled writes
+- Enforce strict schema validation before persistence
+
+Status:
+- Completed on 2026-04-20
+
+### Phase 5 - Initial Specialist Agents
+
+Objectives:
+- Implement first three specialists end-to-end:
+- NewsIntelAgent
+- FundamentalsAgent
+- TechnicalsAgent
+
+Status:
+- Completed on 2026-04-20
+
+### Phase 6 - Orchestrator
+
+Objectives:
+- Implement master orchestrator for watchlist jobs
+- Invoke enabled specialists, synthesize outputs, compute final signal and confidence
+- Persist normalized stock analysis with factors and citations
+
+Status:
+- Completed on 2026-04-20
+
+### Phase 7 - Scheduler Integration
+
+Objectives:
+- Extend existing scheduler to run AI jobs per enabled watchlist cadence
+- Add bounded concurrency, retries, stale-job handling, and skip rules
+
+Status:
+- Completed on 2026-04-20
+
+### Phase 8 - Frontend UI
+
+Objectives:
+- Add watchlist AI settings and run controls
+- Show watchlist-level summary and stock-level AI analysis views
+- Add diagnostics/admin page for provider/job/source health
+
+Status:
+- Completed on 2026-04-20
+
+### Phase 9 - Additional Specialist Agents
+
+Objectives:
+- Add remaining specialists:
+- GeopoliticalRiskAgent
+- RegulationAgent
+- EarningsEventsAgent
+- OptionsFlowAgent
+- MacroSectorAgent
+- PortfolioImpactAgent
+- SourceHealthAgent
+- WebAppOpsAgent (read-only diagnostics scope)
 
 Status:
 - Completed on 2026-04-20
@@ -311,6 +387,58 @@ Validation Results:
 
 Notes:
 - One local runtime import check failed in shell due to missing environment dependency (`sqlalchemy` not installed in that shell context).
+
+### 2026-04-20 - Phase 3 to Phase 9 Implemented (Provider, Contracts, Agents, Orchestrator, Scheduler, UI)
+
+Scope delivered:
+- Provider abstraction with `openai` and `local-summary`
+- Central AI schemas and typed tool registry
+- Specialist agents for all required categories
+- Watchlist orchestrator with persistence and bounded concurrency
+- Scheduler integration for due jobs and stale cleanup
+- Watchlist AI settings, watchlist AI summary, stock detail panel, and AI diagnostics UI
+
+Key backend additions:
+- `backend/app/ai/providers/`
+- `backend/app/ai/agents/`
+- `backend/app/ai/schemas.py`
+- `backend/app/ai/tool_registry.py`
+- `backend/app/ai/orchestrator.py`
+- `backend/app/ai/router.py`
+- `backend/app/ai/services/config_service.py`
+- `backend/app/ai/services/data_access_service.py`
+- `backend/app/ai/services/analysis_service.py`
+
+Key integration updates:
+- `backend/app/main.py`
+- `backend/app/services/scheduler_service.py`
+- `backend/app/scheduler_runner.py`
+- `backend/app/core/config.py`
+- `backend/requirements*.txt`
+
+Key frontend additions:
+- `frontend/src/pages/AIDiagnosticsPage.tsx`
+- `frontend/src/pages/WatchlistsPage.tsx`
+- `frontend/src/pages/DashboardPage.tsx`
+- `frontend/src/lib/api.ts`
+- `frontend/src/lib/types.ts`
+- `frontend/src/components/AppShell.tsx`
+
+### 2026-04-20 - Phase 10 In Progress (Tests, Docs, Env, Validation)
+
+Added:
+- `backend/tests/test_ai_analysis.py`
+- `.env.example` AI configuration
+- `README.md` AI subsystem docs
+
+Validation in progress:
+- Backend compile completed
+- Backend migrations passed (`0001_init`, `0002_ai_analysis`)
+- Backend test suite passed (`13 passed`)
+- App import passed (`app.main`)
+- Scheduler construction passed (`6` jobs registered)
+- Dependency pin corrected: `nsepython==2.97`
+- Frontend build tool unavailable in current shell (`node` / `npm` missing)
 
 ## Current Architecture Additions (So Far)
 

@@ -6,6 +6,12 @@ import type {
   OptionsChain,
   PortfolioHolding,
   PortfolioSummary,
+  AIDiagnosticsResponse,
+  AIRunJobResponse,
+  AIStatusResponse,
+  AIStockAnalysisDetail,
+  AIWatchlistSettings,
+  AIWatchlistSummary,
   PresetItem,
   PriceHistoryItem,
   QuotesResponse,
@@ -90,4 +96,21 @@ export const api = {
     request<NewsItem[]>(`/news?limit=${limit}${symbols ? `&symbols=${encodeURIComponent(symbols)}` : ""}`),
   getEarningsCalendar: (symbols?: string) =>
     request<EarningsEvent[]>(`/news/earnings-calendar${symbols ? `?symbols=${encodeURIComponent(symbols)}` : ""}`),
+  getAIStatus: () => request<AIStatusResponse>("/ai/status"),
+  getAIWatchlistSettings: (watchlistId: number) => request<AIWatchlistSettings>(`/ai/watchlists/${watchlistId}/settings`),
+  updateAIWatchlistSettings: (watchlistId: number, payload: AIWatchlistSettings) =>
+    request(`/ai/watchlists/${watchlistId}/settings`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+  runAIWatchlistAnalysis: (watchlistId: number, force = false) =>
+    request<AIRunJobResponse>(`/ai/watchlists/${watchlistId}/run`, {
+      method: "POST",
+      body: JSON.stringify({ force }),
+    }),
+  getAIWatchlistSummary: (watchlistId: number) => request<AIWatchlistSummary>(`/ai/watchlists/${watchlistId}/summary`),
+  getAIWatchlistAnalyses: (watchlistId: number) => request(`/ai/watchlists/${watchlistId}/analyses`),
+  getAIStockAnalysisDetail: (watchlistId: number, symbol: string) =>
+    request<AIStockAnalysisDetail>(`/ai/watchlists/${watchlistId}/analyses/${encodeURIComponent(symbol)}`),
+  getAIDiagnostics: () => request<AIDiagnosticsResponse>("/ai/diagnostics"),
 };

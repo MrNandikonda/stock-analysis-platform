@@ -33,6 +33,21 @@ export const DashboardPage = () => {
     queryFn: api.getWatchlists,
     refetchInterval: 45_000,
   });
+  const aiSummariesQuery = useQuery({
+    queryKey: ["dashboard-ai-summaries", watchlistQuery.data?.map((item) => item.id).join(",") ?? "none"],
+    enabled: Boolean(watchlistQuery.data?.length),
+    queryFn: async () =>
+      Promise.all(
+        (watchlistQuery.data ?? []).map(async (watchlist) => {
+          try {
+            return await api.getAIWatchlistSummary(watchlist.id);
+          } catch {
+            return null;
+          }
+        }),
+      ),
+    refetchInterval: 60_000,
+  });
 
   const activeRows = streamedQuotes?.length ? streamedQuotes : quotesQuery.data?.items ?? [];
   const topMovers = [...activeRows].sort((a, b) => (b.change_1d ?? 0) - (a.change_1d ?? 0)).slice(0, 5);
@@ -102,6 +117,19 @@ export const DashboardPage = () => {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {(watchlistQuery.data ?? []).map((watchlist) => (
             <div key={watchlist.id} className="rounded-xl border border-slate-500/25 bg-slate-900/40 p-3">
+              {aiSummariesQuery.data?.find((summary) => summary?.watchlist_id === watchlist.id) ? (
+                <div className="mb-2 flex items-center justify-between">
+                  <Badge tone="neutral">
+                    {
+                      aiSummariesQuery.data.find((summary) => summary?.watchlist_id === watchlist.id)?.overall_sentiment ??
+                      "no_data"
+                    }
+                  </Badge>
+                  <span className="text-[11px] text-slate-400">
+                    {aiSummariesQuery.data.find((summary) => summary?.watchlist_id === watchlist.id)?.provider_name ?? "-"}
+                  </span>
+                </div>
+              ) : null}
               <div className="mb-2 flex items-center justify-between">
                 <h4 className="font-semibold text-slate-100">{watchlist.name}</h4>
                 <Badge>{watchlist.items.length} symbols</Badge>
@@ -118,6 +146,11 @@ export const DashboardPage = () => {
                   </div>
                 ))}
               </div>
+              {aiSummariesQuery.data?.find((summary) => summary?.watchlist_id === watchlist.id)?.top_bullish_names.length ? (
+                <p className="mt-3 text-[11px] text-slate-400">
+                  Bullish: {aiSummariesQuery.data.find((summary) => summary?.watchlist_id === watchlist.id)?.top_bullish_names.join(", ")}
+                </p>
+              ) : null}
             </div>
           ))}
         </div>

@@ -6,11 +6,14 @@ from datetime import datetime, timezone
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from app.ai.orchestrator import AIWatchlistOrchestrator
+from app.core.config import get_settings
 from app.services.fundamentals_service import FundamentalsService
 from app.services.market_service import MarketService
 
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 
 def create_scheduler(session_factory: async_sessionmaker) -> AsyncIOScheduler:
@@ -56,6 +59,30 @@ def create_scheduler(session_factory: async_sessionmaker) -> AsyncIOScheduler:
                 await session.rollback()
                 logger.exception("eod snapshot failed: %s", exc)
 
+    async def refresh_ai_watchlists_job() -> None:
+        if not settings.ai_analysis_enabled:
+            return
+        async with session_factory() as session:
+            try:
+                results = await AIWatchlistOrchestrator(session).run_due_watchlists()
+                await session.commit()
+                logger.info("ai watchlist jobs processed: %s", len(results))
+            except Exception as exc:  # pragma: no cover
+                await session.rollback()
+                logger.exception("ai watchlist refresh failed: %s", exc)
+
+    async def cleanup_ai_jobs_job() -> None:
+        if not settings.ai_analysis_enabled:
+            return
+        async with session_factory() as session:
+            try:
+                marked = await AIWatchlistOrchestrator(session).cleanup_stale_jobs()
+                await session.commit()
+                logger.info("ai stale jobs marked: %s", marked)
+            except Exception as exc:  # pragma: no cover
+                await session.rollback()
+                logger.exception("ai stale cleanup failed: %s", exc)
+
     scheduler.add_job(
         refresh_watchlist_prices_job,
         "interval",
@@ -90,5 +117,22 @@ def create_scheduler(session_factory: async_sessionmaker) -> AsyncIOScheduler:
         coalesce=True,
         max_instances=1,
     )
+    scheduler.add_job(
+        refresh_ai_watchlists_job,
+        "interval",
+        minutes=1,
+        id="ai_watchlist_refresh_1m",
+        coalesce=True,
+        max_instances=1,
+        misfire_grace_time=30,
+    )
+    scheduler.add_job(
+        cleanup_ai_jobs_job,
+        "interval",
+        minutes=10,
+        id="ai_stale_cleanup_10m",
+        coalesce=True,
+        max_instances=1,
+        misfire_grace_time=60,
+    )
     return scheduler
-

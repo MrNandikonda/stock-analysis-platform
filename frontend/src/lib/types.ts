@@ -171,3 +171,183 @@ export interface OptionsChain {
   iv?: number | null;
   max_pain?: number | null;
 }
+
+export type AIAnalysisCategory =
+  | "news_intel"
+  | "geopolitical_risk"
+  | "regulation"
+  | "fundamentals"
+  | "technicals"
+  | "earnings_events"
+  | "options_flow"
+  | "macro_sector"
+  | "portfolio_impact"
+  | "source_health"
+  | "webapp_ops";
+
+export type AIOverallSignal = "strong_bearish" | "bearish" | "neutral" | "bullish" | "strong_bullish" | "no_data";
+export type AIFactorType = "bullish" | "bearish" | "neutral" | "risk" | "catalyst" | "stale";
+
+export interface AIProviderStatus {
+  provider_name: string;
+  enabled: boolean;
+  ready: boolean;
+  status: string;
+  message: string;
+  model_orchestrator?: string | null;
+  model_specialist?: string | null;
+  model_summarizer?: string | null;
+  supports_tool_calling: boolean;
+  supports_background_mode: boolean;
+}
+
+export interface AIStatusResponse {
+  ai_analysis_enabled: boolean;
+  default_provider: string;
+  background_mode_enabled: boolean;
+  web_search_enabled: boolean;
+  available_categories: AIAnalysisCategory[];
+  providers: AIProviderStatus[];
+}
+
+export interface AIWatchlistSettings {
+  enabled: boolean;
+  cadence_minutes: number;
+  categories: AIAnalysisCategory[];
+  provider_name: string;
+  model_orchestrator_override?: string | null;
+  model_specialist_override?: string | null;
+  model_summarizer_override?: string | null;
+  max_stocks_per_job: number;
+  max_parallel_agents: number;
+  stale_after_minutes: number;
+}
+
+export interface AIRunJobResponse {
+  job_id: number;
+  status: string;
+  processed_symbols?: number;
+  failed_symbols?: number;
+}
+
+export interface AISourceRef {
+  source_type: string;
+  source_name: string;
+  url?: string | null;
+  title?: string | null;
+  snippet?: string | null;
+  published_at?: string | null;
+  fetched_at?: string | null;
+  freshness_minutes?: number | null;
+  reliability_score?: number | null;
+  source_metadata?: Record<string, unknown>;
+}
+
+export interface AIAnalysisFactor {
+  category: string;
+  factor_type: AIFactorType;
+  headline_summary: string;
+  detail: string;
+  importance_score: number;
+  confidence_score: number;
+  raw_score: number;
+  source_ref?: string | null;
+}
+
+export interface AIAnalysisListItem {
+  symbol: string;
+  overall_signal: Exclude<AIOverallSignal, "no_data">;
+  overall_score: number;
+  confidence_score: number;
+  executive_summary: string;
+  stale_data_flags: string[];
+  created_at: string;
+  expires_at?: string | null;
+}
+
+export interface AIAggregatedAnalysis {
+  symbol: string;
+  watchlist_id: number;
+  overall_signal: Exclude<AIOverallSignal, "no_data">;
+  overall_score: number;
+  confidence_score: number;
+  executive_summary: string;
+  thesis_bull: string;
+  thesis_bear: string;
+  near_term_risks: string[];
+  medium_term_risks: string[];
+  catalysts: string[];
+  regulation_impact: string;
+  geo_political_impact: string;
+  financial_health_summary: string;
+  technical_summary: string;
+  event_summary: string;
+  options_summary: string;
+  source_health_summary: string;
+  stale_data_flags: string[];
+  citations: AISourceRef[];
+  model_metadata: Record<string, unknown>;
+  agent_run_metadata: Record<string, unknown>;
+  factors: AIAnalysisFactor[];
+  source_refs: AISourceRef[];
+}
+
+export interface AIAnalysisDelta {
+  previous_signal?: Exclude<AIOverallSignal, "no_data"> | null;
+  score_change?: number | null;
+  confidence_change?: number | null;
+  changed: boolean;
+  why_changed: string[];
+}
+
+export interface AIStockAnalysisDetail {
+  symbol: string;
+  watchlist_id: number;
+  analysis: AIAggregatedAnalysis;
+  previous_delta: AIAnalysisDelta;
+  created_at: string;
+  expires_at?: string | null;
+}
+
+export interface AIWatchlistSummary {
+  watchlist_id: number;
+  watchlist_name: string;
+  enabled: boolean;
+  provider_name: string;
+  overall_sentiment: AIOverallSignal;
+  average_score?: number | null;
+  average_confidence?: number | null;
+  last_run_time?: string | null;
+  next_run_time?: string | null;
+  top_bullish_names: string[];
+  top_bearish_names: string[];
+  stale_data_warning: boolean;
+  stale_symbols: string[];
+  latest_analyses: AIAnalysisListItem[];
+}
+
+export interface AIJobSummary {
+  id: number;
+  watchlist_id: number;
+  status: string;
+  triggered_by: string;
+  total_symbols: number;
+  processed_symbols: number;
+  failed_symbols: number;
+  retry_count: number;
+  error_message?: string | null;
+  created_at: string;
+  started_at?: string | null;
+  finished_at?: string | null;
+}
+
+export interface AIDiagnosticsResponse {
+  providers: AIProviderStatus[];
+  recent_jobs: AIJobSummary[];
+  recent_failures: AIJobSummary[];
+  average_run_duration_ms?: number | null;
+  token_summary: Record<string, number>;
+  source_health: Record<string, number>;
+  safety_mode: Record<string, boolean>;
+  admin_summary: string;
+}

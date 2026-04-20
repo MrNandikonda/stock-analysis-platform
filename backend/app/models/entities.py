@@ -126,7 +126,6 @@ class ScreenerPreset(Base):
 class StockMetric(Base):
     __tablename__ = "stock_metrics"
     __table_args__ = (
-        Index("ix_stock_metrics_exchange", "exchange"),
         Index("ix_stock_metrics_price", "price"),
     )
 
@@ -162,4 +161,3 @@ class StockMetric(Base):
     pcr: Mapped[float | None] = mapped_column(Float, default=None)
     iv: Mapped[float | None] = mapped_column(Float, default=None)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
-

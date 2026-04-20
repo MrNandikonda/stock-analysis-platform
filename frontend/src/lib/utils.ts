@@ -34,3 +34,25 @@ export const debounce = <TArgs extends unknown[]>(
   };
 };
 
+export const formatDateTime = (value: string | null | undefined): string => {
+  if (!value) {
+    return "-";
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  return parsed.toLocaleString();
+};
+
+export const formatRelativeMinutes = (value: number | null | undefined): string => {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "-";
+  }
+  if (value < 60) {
+    return `${value}m`;
+  }
+  const hours = Math.floor(value / 60);
+  const minutes = value % 60;
+  return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
+};

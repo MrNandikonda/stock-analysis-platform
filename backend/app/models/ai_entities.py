@@ -51,7 +51,6 @@ class AIAnalysisJob(Base):
     __tablename__ = "ai_analysis_jobs"
     __table_args__ = (
         Index("ix_ai_analysis_jobs_watchlist_status", "watchlist_id", "status"),
-        Index("ix_ai_analysis_jobs_created_at", "created_at"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -75,8 +74,6 @@ class AIAgentRun(Base):
     __tablename__ = "ai_agent_runs"
     __table_args__ = (
         Index("ix_ai_agent_runs_job_symbol", "job_id", "symbol"),
-        Index("ix_ai_agent_runs_status", "status"),
-        Index("ix_ai_agent_runs_created_at", "created_at"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -104,8 +101,6 @@ class AIStockAnalysis(Base):
     __tablename__ = "ai_stock_analysis"
     __table_args__ = (
         Index("ix_ai_stock_analysis_watchlist_symbol", "watchlist_id", "symbol"),
-        Index("ix_ai_stock_analysis_is_latest", "is_latest"),
-        Index("ix_ai_stock_analysis_expires_at", "expires_at"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -140,9 +135,7 @@ class AIStockAnalysis(Base):
 class AIStockAnalysisFactor(Base):
     __tablename__ = "ai_stock_analysis_factors"
     __table_args__ = (
-        Index("ix_ai_stock_analysis_factors_analysis", "analysis_id"),
         Index("ix_ai_stock_analysis_factors_symbol_type", "symbol", "factor_type"),
-        Index("ix_ai_stock_analysis_factors_category", "category"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -162,9 +155,7 @@ class AIStockAnalysisFactor(Base):
 class AIStockSourceRef(Base):
     __tablename__ = "ai_stock_source_refs"
     __table_args__ = (
-        Index("ix_ai_stock_source_refs_analysis", "analysis_id"),
         Index("ix_ai_stock_source_refs_symbol_type", "symbol", "source_type"),
-        Index("ix_ai_stock_source_refs_published_at", "published_at"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -222,4 +213,3 @@ class AIAuditLog(Base):
     message: Mapped[str] = mapped_column(Text)
     safe_payload_json: Mapped[str] = mapped_column(Text, default="{}")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
-

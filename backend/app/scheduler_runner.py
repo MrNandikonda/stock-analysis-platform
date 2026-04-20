@@ -4,6 +4,7 @@ import asyncio
 import signal
 
 from app.core.cache import initialize_cache
+from app.ai.services.config_service import AIConfigService
 from app.core.database import Base, async_session_factory, engine
 from app.services.bootstrap_service import bootstrap_data
 from app.services.scheduler_service import create_scheduler
@@ -15,6 +16,7 @@ async def _prepare_database() -> None:
 
     async with async_session_factory() as session:
         await bootstrap_data(session)
+        await AIConfigService(session).sync_provider_defaults()
         await session.commit()
 
 
@@ -36,4 +38,3 @@ async def run_scheduler() -> None:
 
 if __name__ == "__main__":
     asyncio.run(run_scheduler())
-

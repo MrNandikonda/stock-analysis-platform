@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.ai.router import router as ai_router
+from app.ai.services.config_service import AIConfigService
 from app.api.health import router as health_router
 from app.api.market import router as market_router
 from app.api.news import router as news_router
@@ -44,6 +46,7 @@ async def _initialize_data() -> None:
         await bootstrap_data(session)
         await MarketService(session).refresh_metrics(limit=80)
         await FundamentalsService(session).refresh(limit=80)
+        await AIConfigService(session).sync_provider_defaults()
         await session.commit()
 
 
@@ -156,6 +159,7 @@ app.include_router(screener_router, prefix=settings.api_prefix)
 app.include_router(watchlist_router, prefix=settings.api_prefix)
 app.include_router(portfolio_router, prefix=settings.api_prefix)
 app.include_router(news_router, prefix=settings.api_prefix)
+app.include_router(ai_router, prefix=settings.api_prefix)
 
 
 @app.get("/")

@@ -1,10 +1,10 @@
 import type { ReactElement, ReactNode } from "react";
-import { ArrowLeftRight, ChartCandlestick, LayoutDashboard, ListFilter, Newspaper, Wallet, Waves } from "lucide-react";
+import { ActivitySquare, ArrowLeftRight, ChartCandlestick, LayoutDashboard, ListFilter, Newspaper, Wallet, Waves } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store/useAppStore";
 
-export type AppTab = "dashboard" | "screener" | "charts" | "watchlists" | "portfolio" | "news";
+export type AppTab = "dashboard" | "screener" | "charts" | "watchlists" | "portfolio" | "news" | "diagnostics";
 
 const TAB_CONFIG: Array<{ id: AppTab; label: string; icon: ReactElement }> = [
   { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
@@ -13,6 +13,7 @@ const TAB_CONFIG: Array<{ id: AppTab; label: string; icon: ReactElement }> = [
   { id: "watchlists", label: "Watchlists", icon: <Waves size={16} /> },
   { id: "portfolio", label: "Portfolio", icon: <Wallet size={16} /> },
   { id: "news", label: "News", icon: <Newspaper size={16} /> },
+  { id: "diagnostics", label: "AI Ops", icon: <ActivitySquare size={16} /> },
 ];
 
 type AppShellProps = {
@@ -57,7 +58,7 @@ export const AppShell = ({ activeTab, onTabChange, children }: AppShellProps) =>
             </Button>
           </div>
         </div>
-        <nav className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        <nav className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
           {TAB_CONFIG.map((tab) => (
             <Button
               key={tab.id}

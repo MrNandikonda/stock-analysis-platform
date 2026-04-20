@@ -5,7 +5,19 @@ from datetime import datetime, timezone
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from app.core.config import get_settings
 from app.core.database import Base
+from app.models.ai_entities import (
+    AIAgentRun,
+    AIAlertRule,
+    AIAnalysisJob,
+    AIAuditLog,
+    AIProviderConfig,
+    AIStockAnalysis,
+    AIStockAnalysisFactor,
+    AIStockSourceRef,
+    AIWatchlistSetting,
+)
 from app.models.entities import Stock, StockMetric
 
 
@@ -22,6 +34,13 @@ async def db_session(tmp_path) -> AsyncSession:
         yield session
 
     await engine.dispose()
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def clear_settings_cache():
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
 
 
 @pytest_asyncio.fixture
@@ -75,4 +94,3 @@ async def seeded_session(db_session: AsyncSession) -> AsyncSession:
     db_session.add_all(stocks + metrics)
     await db_session.commit()
     return db_session
-
