@@ -19,6 +19,7 @@ engine = create_async_engine(
     echo=False,
     future=True,
     pool_pre_ping=True,
+    connect_args={"timeout": 30},
 )
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
@@ -30,10 +31,10 @@ def _set_sqlite_pragmas(dbapi_connection, _connection_record) -> None:
     cursor.execute("PRAGMA synchronous=NORMAL;")
     cursor.execute("PRAGMA temp_store=MEMORY;")
     cursor.execute("PRAGMA foreign_keys=ON;")
+    cursor.execute("PRAGMA busy_timeout=30000;")
     cursor.close()
 
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_factory() as session:
         yield session
-

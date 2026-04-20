@@ -67,7 +67,7 @@ async def _warm_start_data() -> None:
 async def lifespan(_: FastAPI):
     initialize_cache()
     await _initialize_data()
-    warm_start_task = asyncio.create_task(_warm_start_data())
+    warm_start_task = asyncio.create_task(_warm_start_data()) if settings.run_scheduler_in_api else None
 
     scheduler = None
     if settings.run_scheduler_in_api:

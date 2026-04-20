@@ -152,6 +152,7 @@ class StockMetric(Base):
     debt_equity: Mapped[float | None] = mapped_column(Float, default=None)
     profit_margin: Mapped[float | None] = mapped_column(Float, default=None)
     revenue_growth: Mapped[float | None] = mapped_column(Float, default=None)
+    eps: Mapped[float | None] = mapped_column(Float, default=None)
     rsi_14: Mapped[float | None] = mapped_column(Float, default=None)
     macd: Mapped[float | None] = mapped_column(Float, default=None)
     macd_signal: Mapped[float | None] = mapped_column(Float, default=None)

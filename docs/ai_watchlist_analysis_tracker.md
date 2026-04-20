@@ -48,7 +48,7 @@ AI feature objective:
 | 7 | Scheduler integration | Completed | 2026-04-20 | Due-job scan + stale cleanup added to scheduler |
 | 8 | Frontend UI | Completed | 2026-04-20 | Watchlist AI controls, stock detail, diagnostics page |
 | 9 | Additional specialists | Completed | 2026-04-20 | Geo/regulation/events/options/sector/portfolio/source health/webapp ops |
-| 10 | Tests and polish | In Progress | 2026-04-20 | Tests/docs/env updated; final runtime validation in progress |
+| 10 | Tests and polish | Completed | 2026-04-20 | Tests/docs/env updated; Docker deployment and AI job validation completed |
 
 ## Full Implementation Roadmap
 
@@ -167,153 +167,6 @@ Objectives:
 Status:
 - Completed on 2026-04-20
 
-### Phase 3 - Provider Abstraction
-
-Objectives:
-- Add provider interface for LLM integrations
-- Implement OpenAI Responses API provider (v1)
-- Add env-driven model/provider config and provider health checks
-
-Planned outputs:
-- `base.py`, `openai_provider.py`, `registry.py`
-- Config loader and graceful disabled/no-key behavior
-- Provider health/status methods for diagnostics
-
-Validation checkpoints:
-- Provider registry resolves configured provider
-- Missing key path fails gracefully (no crash)
-- Health endpoint/service reflects provider readiness
-
-Status:
-- Pending
-
-### Phase 4 - Schemas + Tool Registry
-
-Objectives:
-- Define central typed schemas for specialist outputs and final aggregated analysis
-- Add narrow typed internal tools for data retrieval and controlled writes
-- Enforce strict schema validation before persistence
-
-Planned outputs:
-- AI schema models (Pydantic or equivalent typed contracts)
-- Tool registry + typed tool payloads
-- Validation error handling/audit hooks
-
-Validation checkpoints:
-- Malformed model output is rejected safely
-- Valid output persists via controlled service path
-- Audit logs capture failures without secret leakage
-
-Status:
-- Pending
-
-### Phase 5 - Initial Specialist Agents
-
-Objectives:
-- Implement first three specialists end-to-end:
-- NewsIntelAgent
-- FundamentalsAgent
-- TechnicalsAgent
-
-Planned outputs:
-- Agent modules with focused prompts and structured output contracts
-- Minimal tool exposure per agent
-- Persistence of per-agent run metadata and outputs
-
-Validation checkpoints:
-- At least one stock analyzed successfully by each specialist
-- Outputs validated and saved
-- Source references and confidence fields present
-
-Status:
-- Pending
-
-### Phase 6 - Orchestrator
-
-Objectives:
-- Implement master orchestrator for watchlist jobs
-- Invoke enabled specialists, synthesize outputs, compute final signal and confidence
-- Persist normalized stock analysis with factors and citations
-
-Planned outputs:
-- Orchestrator service
-- Aggregation/synthesis rules
-- Job state transitions and concise audit logging
-
-Validation checkpoints:
-- Manual watchlist run creates job + agent runs + stock analyses
-- Final payload includes summary, risk flags, freshness/confidence
-- Conflict resolution lowers confidence when source agreement is weak
-
-Status:
-- Pending
-
-### Phase 7 - Scheduler Integration
-
-Objectives:
-- Extend existing scheduler to run AI jobs per enabled watchlist cadence
-- Add bounded concurrency, retries, stale-job handling, and skip rules
-
-Planned outputs:
-- Scheduler hooks/jobs for AI analysis
-- Job lifecycle handling for running/failed/stale jobs
-- Retry/backoff logic within lightweight constraints
-
-Validation checkpoints:
-- Periodic job executes successfully
-- Running job overlap handled safely (skip/defer)
-- Stale job cleanup works
-
-Status:
-- Pending
-
-### Phase 8 - Frontend UI
-
-Objectives:
-- Add watchlist AI settings and run controls
-- Show watchlist-level summary and stock-level AI analysis views
-- Add diagnostics/admin page for provider/job/source health
-
-Planned outputs:
-- Watchlist AI settings panel
-- AI summary widgets/cards
-- Stock analysis drawer/panel
-- Diagnostics page
-
-Validation checkpoints:
-- Frontend builds and renders AI data from backend
-- Manual run and periodic run results visible in UI
-- Missing provider/degraded mode messaging is clear
-
-Status:
-- Pending
-
-### Phase 9 - Additional Specialist Agents
-
-Objectives:
-- Add remaining specialists:
-- GeopoliticalRiskAgent
-- RegulationAgent
-- EarningsEventsAgent
-- OptionsFlowAgent
-- MacroSectorAgent
-- PortfolioImpactAgent
-- SourceHealthAgent
-- WebAppOpsAgent (read-only diagnostics scope)
-
-Planned outputs:
-- Additional agent modules + prompt registry entries
-- Extended synthesis integration
-- Safety-scoped WebAppOps diagnostics
-
-Validation checkpoints:
-- Each agent produces schema-valid output or explicit insufficient evidence
-- Orchestrator incorporates additional categories without breaking existing flow
-- WebAppOps remains non-mutating
-
-Status:
-- Pending
-
 ### Phase 10 - Tests and Polish
 
 Objectives:
@@ -334,7 +187,7 @@ Validation checkpoints:
 - Frontend builds and displays stored AI analysis
 
 Status:
-- Pending
+- Completed on 2026-04-20
 
 ## Completed Work Log
 
@@ -424,14 +277,15 @@ Key frontend additions:
 - `frontend/src/lib/types.ts`
 - `frontend/src/components/AppShell.tsx`
 
-### 2026-04-20 - Phase 10 In Progress (Tests, Docs, Env, Validation)
+### 2026-04-20 - Phase 10 Completed (Tests, Docs, Env, Validation)
 
 Added:
 - `backend/tests/test_ai_analysis.py`
 - `.env.example` AI configuration
 - `README.md` AI subsystem docs
+- `backend/migrations/0003_stock_metrics_eps.sql`
 
-Validation in progress:
+Validation completed:
 - Backend compile completed
 - Backend migrations passed (`0001_init`, `0002_ai_analysis`)
 - Backend test suite passed (`13 passed`)
@@ -440,7 +294,19 @@ Validation in progress:
 - Dependency pin corrected: `nsepython==2.97`
 - Frontend dependency install passed after Node install
 - Frontend production build passed (`npm run build`)
+- Docker Compose config validated
+- Docker backend, scheduler, and frontend services are running
+- Health endpoint passed (`/api/v1/health`)
+- Backend docs passed (`/docs`)
+- Frontend passed (`http://localhost:8080`)
+- Manual AI watchlist run passed on deployed stack
+- Scheduler-driven AI watchlist run passed on deployed stack
 - Frontend build warning noted: main JS chunk is ~792 kB and can be code-split later
+
+Deployment fixes applied:
+- Moved heavy warm-start refresh off the API startup path when the dedicated scheduler container is used
+- Added SQLite busy timeout configuration to reduce write-contention failures
+- Added missing `stock_metrics.eps` schema/model support so fundamentals refresh jobs succeed
 
 ## Current Architecture Additions (So Far)
 
@@ -455,22 +321,33 @@ Validation in progress:
 
 ## Open Risks / Follow-ups
 
-- Ensure runtime environment dependency parity before integration testing.
 - Keep concurrency and job batch size bounded for laptop safety.
 - Preserve strict schema validation before persisting model output.
 - Ensure prompts/tools remain scoped so specialist agents do not gain unnecessary write actions.
 - Keep all new logging concise and secret-safe for API/provider data.
+- Frontend bundle size is functional but larger than ideal; code-splitting can reduce the main chunk later.
+- Backend image size is currently above the original stretch target; dependency slimming remains a future optimization.
 
-## Next Phase (Phase 3) Plan
+## Deployment Baseline
 
-Target:
-- Provider abstraction with OpenAI Responses API support and health checks.
+Validated commands:
 
-Expected deliverables:
-- Provider base interface
-- OpenAI provider implementation
-- Provider registry/config wiring
-- Graceful handling when API key is missing/disabled
+```powershell
+docker compose config
+docker compose build backend scheduler frontend
+docker compose up -d
+docker stats --no-stream
+```
+
+Validated endpoints:
+- Frontend: `http://localhost:8080`
+- Backend health: `http://localhost:8000/api/v1/health`
+- Backend docs: `http://localhost:8000/docs`
+
+Current deployment notes:
+- `.env` is configured for `local-summary` by default, so AI features work without external API keys.
+- `backend` and `scheduler` run as `root` inside the container so the shared SQLite volume stays writable on this laptop.
+- Periodic scheduling is active through the dedicated `scheduler` container.
 
 ## Acceptance Targets (Tracking)
 
