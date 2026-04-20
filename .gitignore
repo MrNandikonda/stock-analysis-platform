@@ -10,10 +10,10 @@ __pycache__/
 node_modules/
 dist/
 .vite/
+*.tsbuildinfo
 
 # Runtime files
 data/
 logs/
 .env
 .DS_Store
-

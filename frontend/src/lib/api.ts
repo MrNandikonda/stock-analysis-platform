@@ -7,6 +7,7 @@ import type {
   PortfolioHolding,
   PortfolioSummary,
   AIDiagnosticsResponse,
+  AIAnalysisListItem,
   AIRunJobResponse,
   AIStatusResponse,
   AIStockAnalysisDetail,
@@ -109,7 +110,8 @@ export const api = {
       body: JSON.stringify({ force }),
     }),
   getAIWatchlistSummary: (watchlistId: number) => request<AIWatchlistSummary>(`/ai/watchlists/${watchlistId}/summary`),
-  getAIWatchlistAnalyses: (watchlistId: number) => request(`/ai/watchlists/${watchlistId}/analyses`),
+  getAIWatchlistAnalyses: (watchlistId: number) =>
+    request<AIAnalysisListItem[]>(`/ai/watchlists/${watchlistId}/analyses`),
   getAIStockAnalysisDetail: (watchlistId: number, symbol: string) =>
     request<AIStockAnalysisDetail>(`/ai/watchlists/${watchlistId}/analyses/${encodeURIComponent(symbol)}`),
   getAIDiagnostics: () => request<AIDiagnosticsResponse>("/ai/diagnostics"),

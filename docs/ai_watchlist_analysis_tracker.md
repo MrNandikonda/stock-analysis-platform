@@ -438,7 +438,9 @@ Validation in progress:
 - App import passed (`app.main`)
 - Scheduler construction passed (`6` jobs registered)
 - Dependency pin corrected: `nsepython==2.97`
-- Frontend build tool unavailable in current shell (`node` / `npm` missing)
+- Frontend dependency install passed after Node install
+- Frontend production build passed (`npm run build`)
+- Frontend build warning noted: main JS chunk is ~792 kB and can be code-split later
 
 ## Current Architecture Additions (So Far)
 
