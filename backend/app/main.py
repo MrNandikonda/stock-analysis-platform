@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import base64
+import logging
 import secrets
 import time
 from contextlib import asynccontextmanager
@@ -27,6 +29,7 @@ from app.services.scheduler_service import create_scheduler
 
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -44,16 +47,27 @@ async def _initialize_data() -> None:
 
     async with async_session_factory() as session:
         await bootstrap_data(session)
-        await MarketService(session).refresh_metrics(limit=80)
-        await FundamentalsService(session).refresh(limit=80)
         await AIConfigService(session).sync_provider_defaults()
         await session.commit()
+
+
+async def _warm_start_data() -> None:
+    async with async_session_factory() as session:
+        try:
+            await asyncio.wait_for(MarketService(session).refresh_metrics(limit=40), timeout=120)
+            await asyncio.wait_for(FundamentalsService(session).refresh(limit=40), timeout=120)
+            await session.commit()
+            logger.info("background warm start data refresh completed")
+        except Exception as exc:  # pragma: no cover
+            await session.rollback()
+            logger.warning("background warm start skipped or failed: %s", exc)
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     initialize_cache()
     await _initialize_data()
+    warm_start_task = asyncio.create_task(_warm_start_data())
 
     scheduler = None
     if settings.run_scheduler_in_api:
@@ -63,6 +77,8 @@ async def lifespan(_: FastAPI):
     try:
         yield
     finally:
+        if warm_start_task and not warm_start_task.done():
+            warm_start_task.cancel()
         if scheduler:
             scheduler.shutdown(wait=False)
         await engine.dispose()
