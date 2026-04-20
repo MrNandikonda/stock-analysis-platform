@@ -19,12 +19,10 @@ class Settings:
     api_prefix: str
     database_url: str
     cors_origins: tuple[str, ...]
-    alpha_vantage_key: str
     run_scheduler_in_api: bool
     basic_auth_user: str | None
     basic_auth_password: str | None
     yfinance_hourly_limit: int
-    alpha_vantage_minute_limit: int
     api_rate_limit_per_minute: int
 
 
@@ -47,11 +45,9 @@ def get_settings() -> Settings:
         api_prefix=os.getenv("API_PREFIX", "/api/v1"),
         database_url=db_url,
         cors_origins=cors_origins,
-        alpha_vantage_key=os.getenv("ALPHA_VANTAGE_KEY", ""),
         run_scheduler_in_api=_parse_bool(os.getenv("RUN_SCHEDULER_IN_API"), default=False),
         basic_auth_user=os.getenv("BASIC_AUTH_USER"),
         basic_auth_password=os.getenv("BASIC_AUTH_PASSWORD"),
         yfinance_hourly_limit=int(os.getenv("YFINANCE_HOURLY_LIMIT", "2000")),
-        alpha_vantage_minute_limit=int(os.getenv("ALPHA_VANTAGE_MINUTE_LIMIT", "5")),
         api_rate_limit_per_minute=int(os.getenv("API_RATE_LIMIT_PER_MINUTE", "120")),
     )

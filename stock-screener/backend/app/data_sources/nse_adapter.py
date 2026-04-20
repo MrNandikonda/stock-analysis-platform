@@ -13,7 +13,6 @@ from app.core.rate_limit import DataSourceRateLimiter
 settings = get_settings()
 rate_limiter = DataSourceRateLimiter(
     yfinance_hourly_limit=settings.yfinance_hourly_limit,
-    alpha_vantage_minute_limit=settings.alpha_vantage_minute_limit,
 )
 
 
@@ -121,4 +120,3 @@ class NSEAdapter:
             "spot": spot,
             "rows": rows,
         }
-

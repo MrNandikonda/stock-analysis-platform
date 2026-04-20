@@ -36,15 +36,11 @@ class TokenBucket:
 
 
 class DataSourceRateLimiter:
-    def __init__(self, yfinance_hourly_limit: int, alpha_vantage_minute_limit: int) -> None:
+    def __init__(self, yfinance_hourly_limit: int) -> None:
         self._buckets: dict[str, TokenBucket] = {
             "yfinance": TokenBucket(
                 capacity=float(yfinance_hourly_limit),
                 refill_per_second=float(yfinance_hourly_limit) / 3600.0,
-            ),
-            "alpha_vantage": TokenBucket(
-                capacity=float(alpha_vantage_minute_limit),
-                refill_per_second=float(alpha_vantage_minute_limit) / 60.0,
             ),
             "nse": TokenBucket(capacity=120.0, refill_per_second=2.0),
         }
@@ -54,4 +50,3 @@ class DataSourceRateLimiter:
         allowed = await bucket.acquire(tokens=tokens)
         if not allowed:
             raise RateLimitError(f"Rate limit exceeded for {source}")
-

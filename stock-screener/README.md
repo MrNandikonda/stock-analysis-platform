@@ -156,7 +156,7 @@ Included:
 - CORS restricted via `.env` (`CORS_ORIGINS`)
 - Optional basic HTTP auth with `BASIC_AUTH_USER` + `BASIC_AUTH_PASSWORD`
 - In-memory endpoint rate limiter (`API_RATE_LIMIT_PER_MINUTE`)
-- API keys loaded from env only
+- Sensitive runtime settings loaded from env only
 
 ## Adding a new market in future
 
@@ -167,4 +167,3 @@ Included:
 3. Add any market-specific fields to `stock_metrics` and migration SQL.
 4. Add frontend market toggle option in `frontend/src/store/useAppStore.ts`.
 5. Add exchange-specific chart/options behavior in `frontend/src/pages/ChartsPage.tsx`.
-

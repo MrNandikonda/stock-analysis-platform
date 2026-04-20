@@ -6,12 +6,8 @@ yfinance==0.2.35
 nsepython==2.96
 apscheduler==3.10.4
 aiocache==0.12.2
-pandas==2.2.0
-numpy==1.26.3
-pandas-ta==0.3.14b
 feedparser==6.0.11
 vaderSentiment==3.3.2
 python-dotenv==1.0.0
-httpx==0.27.0
 pytest==8.3.2
 pytest-asyncio==0.24.0

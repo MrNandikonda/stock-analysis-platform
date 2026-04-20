@@ -10,13 +10,12 @@ import yfinance as yf
 
 from app.core.cache import async_ttl_cache
 from app.core.config import get_settings
-from app.core.rate_limit import DataSourceRateLimiter, RateLimitError
+from app.core.rate_limit import DataSourceRateLimiter
 
 
 settings = get_settings()
 rate_limiter = DataSourceRateLimiter(
     yfinance_hourly_limit=settings.yfinance_hourly_limit,
-    alpha_vantage_minute_limit=settings.alpha_vantage_minute_limit,
 )
 
 
@@ -175,4 +174,3 @@ def _float_or_none(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
-
