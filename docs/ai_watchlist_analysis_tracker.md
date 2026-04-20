@@ -1,0 +1,379 @@
+# AI Watchlist Analysis Tracker
+
+This file is the single source of truth for progress on the AI-driven watchlist analysis subsystem for `stock-analysis-platform`.
+
+## Project Overview
+
+This repository is a single-user, self-hosted, lightweight multi-market stock screener web application designed to run on a Windows 11 laptop with constrained resources.
+
+Core platform goals:
+- Support NSE and NYSE/NASDAQ market workflows
+- Keep backend/frontend stack lightweight and Docker-friendly
+- Preserve current features: watchlists, screener, charts, portfolio, news, alerts, scheduler
+- Add AI-driven watchlist analysis as an extension, not a rewrite
+
+Technical baseline:
+- Backend: FastAPI + async Python + SQLAlchemy + SQLite + APScheduler
+- Frontend: React + Vite + TypeScript
+- Deployment: Docker Compose (resource-bounded services)
+
+AI feature objective:
+- Add orchestrated multi-agent analysis for watchlists with typed outputs, provenance, confidence scoring, periodic scheduling, and UI visibility, while maintaining low memory/CPU footprint and safe operations.
+
+## Scope
+
+- Extend existing app only (no heavy infra changes)
+- Keep laptop-friendly resource profile
+- Follow phased rollout (Phase 1 to Phase 10)
+- Maintain additive DB/API/UI changes without breaking existing watchlist/screener/dashboard flows
+
+## Constraints Snapshot
+
+- Keep SQLite, FastAPI, APScheduler, current Docker setup
+- No Redis/Postgres/Kafka/Celery/RabbitMQ
+- Least-privilege agent access model
+- Schema-validated AI outputs only
+- Safe logging (no secrets)
+
+## Phase Status Board
+
+| Phase | Name | Status | Last Update | Notes |
+|---|---|---|---|---|
+| 1 | Repo analysis and plan | Completed | 2026-04-20 | Architecture mapped, extension points identified |
+| 2 | Data model + migrations | Completed | 2026-04-20 | Added AI schema migration + ORM + persistence service |
+| 3 | Provider abstraction | Pending | - | Base provider + OpenAI provider + health checks |
+| 4 | Schemas + tool registry | Pending | - | Typed contracts and validation pipeline |
+| 5 | Initial specialists | Pending | - | News/Fundamentals/Technicals agents |
+| 6 | Orchestrator | Pending | - | Batch processing and synthesis |
+| 7 | Scheduler integration | Pending | - | Cadence jobs, retries, stale handling |
+| 8 | Frontend UI | Pending | - | Watchlist settings, stock AI panels, diagnostics |
+| 9 | Additional specialists | Pending | - | Remaining domain agents + ops agent |
+| 10 | Tests and polish | Pending | - | Docs, graceful degradation, test coverage |
+
+## Full Implementation Roadmap
+
+### Phase 1 - Repo Analysis and Plan
+
+Objectives:
+- Inspect existing backend/frontend architecture
+- Identify extension points and compatibility constraints
+- Define phased execution and risk controls
+
+Planned outputs:
+- Architecture summary
+- File-level change map
+- Risks and mitigations
+- Sequenced implementation plan
+
+Validation checkpoints:
+- Confirm plan aligns with current service/router/scheduler patterns
+- Confirm no broad uncontrolled refactor required
+
+Status:
+- Completed on 2026-04-20
+
+### Phase 2 - Data Model + Migrations
+
+Objectives:
+- Add additive SQLite schema for AI subsystem
+- Add SQLAlchemy entities and persistence service helpers
+
+Planned outputs:
+- Migration script for AI tables and indexes
+- ORM models
+- Controlled persistence service methods
+
+Validation checkpoints:
+- Migration apply success on clean DB
+- Tables/indexes present
+- Backend imports/compile checks pass
+
+Status:
+- Completed on 2026-04-20
+
+### Phase 3 - Provider Abstraction
+
+Objectives:
+- Add provider interface for LLM integrations
+- Implement OpenAI Responses API provider (v1)
+- Add env-driven model/provider config and provider health checks
+
+Planned outputs:
+- `base.py`, `openai_provider.py`, `registry.py`
+- Config loader and graceful disabled/no-key behavior
+- Provider health/status methods for diagnostics
+
+Validation checkpoints:
+- Provider registry resolves configured provider
+- Missing key path fails gracefully (no crash)
+- Health endpoint/service reflects provider readiness
+
+Status:
+- Pending
+
+### Phase 4 - Schemas + Tool Registry
+
+Objectives:
+- Define central typed schemas for specialist outputs and final aggregated analysis
+- Add narrow typed internal tools for data retrieval and controlled writes
+- Enforce strict schema validation before persistence
+
+Planned outputs:
+- AI schema models (Pydantic or equivalent typed contracts)
+- Tool registry + typed tool payloads
+- Validation error handling/audit hooks
+
+Validation checkpoints:
+- Malformed model output is rejected safely
+- Valid output persists via controlled service path
+- Audit logs capture failures without secret leakage
+
+Status:
+- Pending
+
+### Phase 5 - Initial Specialist Agents
+
+Objectives:
+- Implement first three specialists end-to-end:
+- NewsIntelAgent
+- FundamentalsAgent
+- TechnicalsAgent
+
+Planned outputs:
+- Agent modules with focused prompts and structured output contracts
+- Minimal tool exposure per agent
+- Persistence of per-agent run metadata and outputs
+
+Validation checkpoints:
+- At least one stock analyzed successfully by each specialist
+- Outputs validated and saved
+- Source references and confidence fields present
+
+Status:
+- Pending
+
+### Phase 6 - Orchestrator
+
+Objectives:
+- Implement master orchestrator for watchlist jobs
+- Invoke enabled specialists, synthesize outputs, compute final signal and confidence
+- Persist normalized stock analysis with factors and citations
+
+Planned outputs:
+- Orchestrator service
+- Aggregation/synthesis rules
+- Job state transitions and concise audit logging
+
+Validation checkpoints:
+- Manual watchlist run creates job + agent runs + stock analyses
+- Final payload includes summary, risk flags, freshness/confidence
+- Conflict resolution lowers confidence when source agreement is weak
+
+Status:
+- Pending
+
+### Phase 7 - Scheduler Integration
+
+Objectives:
+- Extend existing scheduler to run AI jobs per enabled watchlist cadence
+- Add bounded concurrency, retries, stale-job handling, and skip rules
+
+Planned outputs:
+- Scheduler hooks/jobs for AI analysis
+- Job lifecycle handling for running/failed/stale jobs
+- Retry/backoff logic within lightweight constraints
+
+Validation checkpoints:
+- Periodic job executes successfully
+- Running job overlap handled safely (skip/defer)
+- Stale job cleanup works
+
+Status:
+- Pending
+
+### Phase 8 - Frontend UI
+
+Objectives:
+- Add watchlist AI settings and run controls
+- Show watchlist-level summary and stock-level AI analysis views
+- Add diagnostics/admin page for provider/job/source health
+
+Planned outputs:
+- Watchlist AI settings panel
+- AI summary widgets/cards
+- Stock analysis drawer/panel
+- Diagnostics page
+
+Validation checkpoints:
+- Frontend builds and renders AI data from backend
+- Manual run and periodic run results visible in UI
+- Missing provider/degraded mode messaging is clear
+
+Status:
+- Pending
+
+### Phase 9 - Additional Specialist Agents
+
+Objectives:
+- Add remaining specialists:
+- GeopoliticalRiskAgent
+- RegulationAgent
+- EarningsEventsAgent
+- OptionsFlowAgent
+- MacroSectorAgent
+- PortfolioImpactAgent
+- SourceHealthAgent
+- WebAppOpsAgent (read-only diagnostics scope)
+
+Planned outputs:
+- Additional agent modules + prompt registry entries
+- Extended synthesis integration
+- Safety-scoped WebAppOps diagnostics
+
+Validation checkpoints:
+- Each agent produces schema-valid output or explicit insufficient evidence
+- Orchestrator incorporates additional categories without breaking existing flow
+- WebAppOps remains non-mutating
+
+Status:
+- Pending
+
+### Phase 10 - Tests and Polish
+
+Objectives:
+- Add unit/integration coverage
+- Improve failure handling and observability
+- Finalize docs/runbook/env samples
+
+Planned outputs:
+- Tests for schemas, provider failures, orchestration, scheduler flow
+- Docs updates (`README` and/or `docs/ai_watchlist_analysis.md`)
+- `.env.example` updates
+
+Validation checkpoints:
+- Backend imports cleanly
+- Migrations apply
+- API and scheduler start
+- Manual and scheduled AI runs succeed
+- Frontend builds and displays stored AI analysis
+
+Status:
+- Pending
+
+## Completed Work Log
+
+### 2026-04-20 - Phase 1 Completed (Planning)
+
+Summary:
+- Reviewed existing backend/frontend architecture and identified safe extension points.
+- Produced phased implementation approach with risks and mitigations.
+- Created file-by-file change map before coding.
+
+Outcome:
+- Approved to proceed to Phase 2.
+
+### 2026-04-20 - Phase 2 Completed (Data Model + Persistence)
+
+Commit:
+- `a94d0e9` - `feat(ai-phase2): add AI analysis schema and persistence layer`
+
+Files Added:
+- `backend/migrations/0002_ai_analysis.sql`
+- `backend/app/models/ai_entities.py`
+- `backend/app/ai/__init__.py`
+- `backend/app/ai/services/__init__.py`
+- `backend/app/ai/services/persistence_service.py`
+
+Files Modified:
+- `backend/app/models/__init__.py`
+
+DB Tables Added:
+- `ai_provider_config`
+- `ai_watchlist_settings`
+- `ai_analysis_jobs`
+- `ai_agent_runs`
+- `ai_stock_analysis`
+- `ai_stock_analysis_factors`
+- `ai_stock_source_refs`
+- `ai_alert_rules`
+- `ai_audit_logs`
+
+Validation Commands:
+```powershell
+python -m compileall backend/app
+$env:DB_PATH='backend/data/phase2_migration_test.db'; python backend/migrations/run_migrations.py
+```
+
+Validation Results:
+- Backend modules compiled successfully.
+- Migrations `0001_init` and `0002_ai_analysis` applied on test DB.
+- Verified all AI tables exist.
+
+Notes:
+- One local runtime import check failed in shell due to missing environment dependency (`sqlalchemy` not installed in that shell context).
+
+## Current Architecture Additions (So Far)
+
+- New AI module namespace: `backend/app/ai/`
+- New persistence service responsible for controlled writes:
+  - watchlist AI settings
+  - job lifecycle
+  - agent run lifecycle
+  - normalized analysis + factors + source refs
+  - audit logs
+  - AI alert rules
+
+## Open Risks / Follow-ups
+
+- Ensure runtime environment dependency parity before integration testing.
+- Keep concurrency and job batch size bounded for laptop safety.
+- Preserve strict schema validation before persisting model output.
+- Ensure prompts/tools remain scoped so specialist agents do not gain unnecessary write actions.
+- Keep all new logging concise and secret-safe for API/provider data.
+
+## Next Phase (Phase 3) Plan
+
+Target:
+- Provider abstraction with OpenAI Responses API support and health checks.
+
+Expected deliverables:
+- Provider base interface
+- OpenAI provider implementation
+- Provider registry/config wiring
+- Graceful handling when API key is missing/disabled
+
+## Acceptance Targets (Tracking)
+
+- App starts via Docker Compose on Windows 11 laptop setup
+- AI jobs run without breaking existing watchlist/screener/dashboard
+- Bounded resource behavior remains compatible with low-memory deployment intent
+- Schema validation protects persistence layer from malformed LLM output
+- Provider-disabled mode remains functional and user-visible
+- Analysis results include confidence, freshness, and source provenance
+
+## Update Template (Use For Every Phase)
+
+```md
+### YYYY-MM-DD - Phase X Completed (Name)
+
+Commit:
+- <hash> - <message>
+
+Files Added:
+- <path>
+
+Files Modified:
+- <path>
+
+Commands Run:
+- <command>
+
+Validation Outcome:
+- <pass/fail and details>
+
+Blockers / Risks:
+- <items>
+
+Next Step:
+- <phase + action>
+```
