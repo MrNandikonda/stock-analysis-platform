@@ -15,7 +15,7 @@ services:
     volumes:
       - screener_data:/app/data
     ports:
-      - "8000:8000"
+      - "${BACKEND_BIND_HOST:-127.0.0.1}:${BACKEND_PORT:-8000}:8000"
     user: "0:0"
     command: ["sh", "-c", "python migrations/run_migrations.py && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
     restart: unless-stopped
@@ -51,10 +51,12 @@ services:
     container_name: stock-screener-frontend
     mem_limit: 128m
     cpus: 0.5
+    environment:
+      NGINX_SERVER_NAMES: ${PUBLIC_HOSTNAMES:-localhost 127.0.0.1}
     depends_on:
       - backend
     ports:
-      - "8080:80"
+      - "${FRONTEND_HTTP_PORT:-8080}:80"
     restart: unless-stopped
 
 volumes:

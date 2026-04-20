@@ -61,6 +61,41 @@ Self-hosted stock screener for **NSE + NYSE/NASDAQ** with a lightweight footprin
    - Frontend: `http://localhost:8080`
    - Backend docs: `http://localhost:8000/docs`
 
+## Public domain deployment
+
+The Docker setup can serve a public hostname through the frontend container while keeping the backend bound to localhost only.
+
+Recommended `.env` settings for a domain such as `rythumarket.shop`:
+
+```env
+PUBLIC_HOSTNAMES=rythumarket.shop www.rythumarket.shop localhost 127.0.0.1
+FRONTEND_HTTP_PORT=80
+BACKEND_BIND_HOST=127.0.0.1
+BACKEND_PORT=8000
+CORS_ORIGINS=http://localhost:8080,http://127.0.0.1:8080,http://localhost:5173,http://rythumarket.shop,https://rythumarket.shop
+```
+
+If the app will be reachable from outside your laptop, also set:
+
+```env
+BASIC_AUTH_USER=<your-user>
+BASIC_AUTH_PASSWORD=<your-strong-password>
+```
+
+Then recreate the stack:
+
+```powershell
+docker compose up --build -d
+```
+
+What still needs to happen outside this repo:
+
+1. Point `rythumarket.shop` DNS to your home/public entry point.
+2. Forward port `80` from your router to this laptop if you want direct public access.
+3. Add TLS separately if you want `https://rythumarket.shop` in production.
+
+The frontend container accepts the public host and proxies `/api/` internally to the backend, so the backend does not need to be exposed publicly.
+
 ## Local dev (without Docker)
 
 ### Backend
