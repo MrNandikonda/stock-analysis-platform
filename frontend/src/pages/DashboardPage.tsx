@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useQuoteStream } from "@/hooks/useQuoteStream";
 import { api } from "@/lib/api";
+import type { QuoteItem } from "@/lib/types";
 import { formatCompact, formatNumber } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -252,13 +253,13 @@ const average = (values: number[]) => {
   return values.reduce((acc, value) => acc + value, 0) / values.length;
 };
 
-const pickNewestRows = (primaryRows: Array<{ updated_at: string }>, secondaryRows: Array<{ updated_at: string }>) => {
+const pickNewestRows = (primaryRows: QuoteItem[], secondaryRows: QuoteItem[]): QuoteItem[] => {
   if (!primaryRows.length) return secondaryRows;
   if (!secondaryRows.length) return primaryRows;
   return maxUpdatedAt(secondaryRows) > maxUpdatedAt(primaryRows) ? secondaryRows : primaryRows;
 };
 
-const maxUpdatedAt = (rows: Array<{ updated_at: string }>) =>
+const maxUpdatedAt = (rows: QuoteItem[]) =>
   rows.reduce((latest, row) => {
     const timestamp = Date.parse(row.updated_at);
     if (Number.isNaN(timestamp)) {

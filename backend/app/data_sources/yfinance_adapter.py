@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import logging
 import random
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -17,6 +18,7 @@ settings = get_settings()
 rate_limiter = DataSourceRateLimiter(
     yfinance_hourly_limit=settings.yfinance_hourly_limit,
 )
+logger = logging.getLogger(__name__)
 
 
 def _normalize_symbol(symbol: str, exchange: str) -> str:
@@ -55,9 +57,19 @@ class YFinanceAdapter:
                 "change_1d": round(change_1d, 2),
                 "volume": float(fast_info.get("lastVolume") or 0.0),
                 "timestamp": datetime.now(tz=timezone.utc),
+                "source": "yfinance",
             }
-        except Exception:
-            return self._synthetic_quote(symbol, exchange)
+        except Exception as exc:
+            logger.warning("yfinance quote fetch failed for %s (%s): %s", symbol, exchange, exc)
+            return {
+                "symbol": symbol,
+                "exchange": exchange,
+                "price": None,
+                "change_1d": None,
+                "volume": None,
+                "timestamp": datetime.now(tz=timezone.utc),
+                "source": "error",
+            }
 
     @async_ttl_cache(ttl_seconds=180)
     async def get_history(
@@ -73,7 +85,7 @@ class YFinanceAdapter:
             ticker = await asyncio.to_thread(yf.Ticker, normalized)
             history = await asyncio.to_thread(lambda: ticker.history(period=period, interval=interval))
             if history.empty:
-                return self._synthetic_history(symbol)
+                return []
             records: list[dict[str, Any]] = []
             for idx, row in history.iterrows():
                 records.append(
@@ -87,8 +99,9 @@ class YFinanceAdapter:
                     }
                 )
             return records
-        except Exception:
-            return self._synthetic_history(symbol)
+        except Exception as exc:
+            logger.warning("yfinance history fetch failed for %s (%s): %s", symbol, exchange, exc)
+            return []
 
     @async_ttl_cache(ttl_seconds=1800)
     async def get_fundamentals(self, symbol: str, exchange: str) -> dict[str, float | None]:

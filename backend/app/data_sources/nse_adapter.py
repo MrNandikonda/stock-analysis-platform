@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import logging
 import random
 from datetime import datetime, timezone
 
@@ -14,6 +15,7 @@ settings = get_settings()
 rate_limiter = DataSourceRateLimiter(
     yfinance_hourly_limit=settings.yfinance_hourly_limit,
 )
+logger = logging.getLogger(__name__)
 
 
 def _rng(symbol: str) -> random.Random:
@@ -22,6 +24,35 @@ def _rng(symbol: str) -> random.Random:
 
 
 class NSEAdapter:
+    @async_ttl_cache(ttl_seconds=20)
+    async def get_quote(self, symbol: str) -> dict:
+        try:
+            await rate_limiter.acquire("nse")
+            from nsepython import nse_eq
+
+            raw_data = await asyncio.to_thread(nse_eq, symbol)
+            price_info = raw_data.get("priceInfo", {})
+            return {
+                "symbol": symbol,
+                "exchange": "NSE",
+                "price": _as_float(price_info.get("lastPrice")),
+                "change_1d": _as_float(price_info.get("pChange")),
+                "volume": None,
+                "timestamp": datetime.now(tz=timezone.utc),
+                "source": "nse",
+            }
+        except Exception as exc:
+            logger.warning("nse quote fetch failed for %s: %s", symbol, exc)
+            return {
+                "symbol": symbol,
+                "exchange": "NSE",
+                "price": None,
+                "change_1d": None,
+                "volume": None,
+                "timestamp": datetime.now(tz=timezone.utc),
+                "source": "error",
+            }
+
     @async_ttl_cache(ttl_seconds=60)
     async def get_options_chain(self, symbol: str) -> dict:
         try:
@@ -120,3 +151,12 @@ class NSEAdapter:
             "spot": spot,
             "rows": rows,
         }
+
+
+def _as_float(value) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None

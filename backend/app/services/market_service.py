@@ -30,7 +30,17 @@ class MarketService:
         stocks = (await self.session.execute(query)).scalars().all()
         updated = 0
         for stock in stocks:
-            quote = await self.yfinance.get_quote(stock.symbol, stock.exchange)
+            quote = (
+                await self.nse.get_quote(stock.symbol)
+                if stock.exchange == "NSE"
+                else await self.yfinance.get_quote(stock.symbol, stock.exchange)
+            )
+            if stock.exchange == "NSE":
+                valid_quote = quote.get("source") == "nse" and quote.get("price") not in (None, 0)
+            else:
+                valid_quote = quote.get("source") == "yfinance" and quote.get("price") not in (None, 0)
+            if not valid_quote:
+                continue
             history = await self.yfinance.get_history(stock.symbol, stock.exchange, period="1y", interval="1d")
             if not history:
                 continue
@@ -106,7 +116,17 @@ class MarketService:
         stocks = (await self.session.execute(query)).scalars().all()
         updated = 0
         for stock in stocks:
-            quote = await self.yfinance.get_quote(stock.symbol, stock.exchange)
+            quote = (
+                await self.nse.get_quote(stock.symbol)
+                if stock.exchange == "NSE"
+                else await self.yfinance.get_quote(stock.symbol, stock.exchange)
+            )
+            if stock.exchange == "NSE":
+                valid_quote = quote.get("source") == "nse" and quote.get("price") not in (None, 0)
+            else:
+                valid_quote = quote.get("source") == "yfinance" and quote.get("price") not in (None, 0)
+            if not valid_quote:
+                continue
             metric_payload = {
                 "symbol": stock.symbol,
                 "exchange": stock.exchange,
