@@ -96,6 +96,40 @@ What still needs to happen outside this repo:
 
 The frontend container accepts the public host and proxies `/api/` internally to the backend, so the backend does not need to be exposed publicly.
 
+## Cloudflare Tunnel deployment
+
+If your router does not expose a port-forwarding UI, the recommended production-safe path is Cloudflare Tunnel.
+
+Cloudflare's current docs state that publishing an application with Cloudflare Tunnel requires your domain to be on Cloudflare DNS. After that, Cloudflare can map a public hostname to a local service such as `http://localhost:80` or, in Docker, the frontend container.
+
+High-level steps:
+
+1. Add `rythumarket.shop` to Cloudflare.
+2. Update your nameservers at GoDaddy to the Cloudflare nameservers Cloudflare gives you.
+3. In Cloudflare Zero Trust, create a Tunnel.
+4. Add a published application route such as:
+   - `app.rythumarket.shop` -> `http://frontend:80`
+5. Copy the tunnel token into `.env`:
+
+```env
+CLOUDFLARED_TUNNEL_TOKEN=<your-cloudflare-tunnel-token>
+```
+
+6. Start the app with the optional tunnel profile:
+
+```powershell
+docker compose --profile tunnel up -d
+```
+
+Notes:
+- This avoids router port forwarding entirely.
+- Cloudflare Tunnel provides HTTPS at the public hostname.
+- For a safer rollout, start with `app.rythumarket.shop` before moving the root domain.
+
+Official references:
+- Cloudflare Tunnel setup: https://developers.cloudflare.com/tunnel/setup/
+- Update nameservers to Cloudflare: https://developers.cloudflare.com/learning-paths/personal-website/domain-setup/update-nameservers/
+
 ## Local dev (without Docker)
 
 ### Backend

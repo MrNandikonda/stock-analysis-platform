@@ -351,6 +351,7 @@ Current deployment notes:
 - Frontend deployment is now domain-ready for `rythumarket.shop` via env-driven nginx `server_name` values.
 - Backend is exposed on `127.0.0.1:8000` only, while the frontend serves public traffic on port `80` and proxies `/api/` internally.
 - Public DNS still needs to be pointed at this laptop or an ingress/tunnel in front of it before `rythumarket.shop` will resolve to this deployment.
+- An optional `cloudflared` Compose profile is available for Cloudflare Tunnel so the app can be published without router port forwarding.
 
 ## Acceptance Targets (Tracking)
 

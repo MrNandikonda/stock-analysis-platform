@@ -59,5 +59,20 @@ services:
       - "${FRONTEND_HTTP_PORT:-8080}:80"
     restart: unless-stopped
 
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: stock-screener-cloudflared
+    profiles:
+      - tunnel
+    command:
+      - tunnel
+      - --no-autoupdate
+      - run
+      - --token
+      - ${CLOUDFLARED_TUNNEL_TOKEN}
+    depends_on:
+      - frontend
+    restart: unless-stopped
+
 volumes:
   screener_data:
