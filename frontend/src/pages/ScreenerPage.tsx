@@ -19,7 +19,7 @@ const DEFAULT_FILTERS: ScreenerFilter[] = [{ field: "price", operator: "gt", val
 
 export const ScreenerPage = () => {
   const queryClient = useQueryClient();
-  const { market, currency, setSelectedSymbol } = useAppStore();
+  const { market, setSelectedSymbol } = useAppStore();
 
   const [logic, setLogic] = useState<LogicOperator>("AND");
   const [filters, setFilters] = useState<ScreenerFilter[]>(DEFAULT_FILTERS);
@@ -140,7 +140,7 @@ export const ScreenerPage = () => {
             {screenerQuery.isFetching ? "Refreshing..." : `${screenerQuery.data?.total ?? 0} matches`}
           </Badge>
         </div>
-        <QuotesTable rows={screenerQuery.data?.items ?? []} currency={currency} onSymbolClick={setSelectedSymbol} />
+        <QuotesTable rows={screenerQuery.data?.items ?? []} onSymbolClick={setSelectedSymbol} />
       </Card>
     </div>
   );

@@ -4,12 +4,9 @@ import { formatCompact, formatNumber } from "@/lib/utils";
 type QuotesTableProps = {
   rows: QuoteItem[];
   onSymbolClick?: (symbol: string) => void;
-  currency?: "INR" | "USD";
 };
 
-const INR_PER_USD = 83.2;
-
-export const QuotesTable = ({ rows, onSymbolClick, currency = "USD" }: QuotesTableProps) => (
+export const QuotesTable = ({ rows, onSymbolClick }: QuotesTableProps) => (
   <div className="overflow-hidden rounded-[1.35rem] border border-slate-300/15 bg-slate-950/55 shadow-inner">
     <div className="max-h-[500px] overflow-auto">
       <table className="min-w-full text-sm">
@@ -28,7 +25,7 @@ export const QuotesTable = ({ rows, onSymbolClick, currency = "USD" }: QuotesTab
         </thead>
         <tbody>
           {rows.map((row) => {
-            const convertedPrice = currency === "INR" && row.exchange !== "NSE" ? row.price * INR_PER_USD : row.price;
+            const displayCurrency = row.exchange === "NSE" ? "INR" : "USD";
             return (
               <tr key={`${row.symbol}-${row.exchange}`} className="border-t border-slate-800/80 transition hover:bg-aqua/5">
                 <td className="px-3 py-3">
@@ -41,7 +38,7 @@ export const QuotesTable = ({ rows, onSymbolClick, currency = "USD" }: QuotesTab
                 </td>
                 <td className="px-3 py-3 text-slate-300">{row.exchange}</td>
                 <td className="px-3 py-3 text-slate-100">
-                  {formatNumber(convertedPrice, 2)} {currency === "INR" && row.exchange !== "NSE" ? "INR" : "USD"}
+                  {formatNumber(row.price, 2)} {displayCurrency}
                 </td>
                 <td className={`px-3 py-3 ${(row.change_1d ?? 0) >= 0 ? "positive" : "negative"}`}>
                   {formatNumber(row.change_1d, 2)}%

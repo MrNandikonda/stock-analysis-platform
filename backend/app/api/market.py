@@ -36,10 +36,14 @@ async def market_quotes(
 @router.post("/refresh")
 async def refresh_market_data(
     limit: int = Query(default=100, ge=1, le=500),
+    mode: str = Query(default="quotes", pattern="^(quotes|full)$"),
     session: AsyncSession = Depends(get_db_session),
 ) -> dict[str, int]:
     service = MarketService(session)
-    updated = await service.refresh_metrics(limit=limit)
+    if mode == "full":
+        updated = await service.refresh_metrics(limit=limit)
+    else:
+        updated = await service.refresh_quotes(limit=limit)
     await session.commit()
     return {"updated": updated}
 

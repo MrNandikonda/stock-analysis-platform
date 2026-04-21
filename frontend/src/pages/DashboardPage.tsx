@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BarChart3, BrainCircuit, DatabaseZap, Flame, Radar, Timer } from "lucide-react";
 
 import { MarketStatusPanel } from "@/components/MarketStatusPanel";
@@ -13,6 +13,7 @@ import { formatCompact, formatNumber } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 
 export const DashboardPage = () => {
+  const queryClient = useQueryClient();
   const { market, currency, setSelectedSymbol } = useAppStore();
   const { streamedQuotes, streamError } = useQuoteStream(market);
 
@@ -49,7 +50,17 @@ export const DashboardPage = () => {
     refetchInterval: 60_000,
   });
 
-  const activeRows = streamedQuotes?.length ? streamedQuotes : quotesQuery.data?.items ?? [];
+  const refreshMutation = useMutation({
+    mutationFn: () => api.refreshMarketData(120, "quotes"),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["quotes", market] });
+      await queryClient.refetchQueries({ queryKey: ["quotes", market], type: "active" });
+    },
+  });
+
+  const queryRows = quotesQuery.data?.items ?? [];
+  const streamRows = streamedQuotes ?? [];
+  const activeRows = pickNewestRows(queryRows, streamRows);
   const topMovers = [...activeRows].sort((a, b) => (b.change_1d ?? 0) - (a.change_1d ?? 0)).slice(0, 5);
   const biggestVolumes = [...activeRows].sort((a, b) => (b.volume ?? 0) - (a.volume ?? 0)).slice(0, 5);
   const summaries = aiSummariesQuery.data?.filter(Boolean) ?? [];
@@ -148,11 +159,11 @@ export const DashboardPage = () => {
             <h2 className="font-display text-lg text-white">Unified Market Watch</h2>
             <p className="muted text-xs">Click symbol to jump into charting view.</p>
           </div>
-          <Button variant="outline" onClick={() => void api.refreshMarketData(120)}>
-            Manual Refresh
+          <Button variant="outline" disabled={refreshMutation.isPending} onClick={() => refreshMutation.mutate()}>
+            {refreshMutation.isPending ? "Refreshing..." : "Manual Refresh"}
           </Button>
         </div>
-        <QuotesTable rows={activeRows} currency={currency} onSymbolClick={setSelectedSymbol} />
+        <QuotesTable rows={activeRows} onSymbolClick={setSelectedSymbol} />
       </Card>
 
       <Card className="space-y-4 hover:border-aqua/25">
@@ -240,3 +251,18 @@ const average = (values: number[]) => {
   if (!values.length) return 0;
   return values.reduce((acc, value) => acc + value, 0) / values.length;
 };
+
+const pickNewestRows = (primaryRows: Array<{ updated_at: string }>, secondaryRows: Array<{ updated_at: string }>) => {
+  if (!primaryRows.length) return secondaryRows;
+  if (!secondaryRows.length) return primaryRows;
+  return maxUpdatedAt(secondaryRows) > maxUpdatedAt(primaryRows) ? secondaryRows : primaryRows;
+};
+
+const maxUpdatedAt = (rows: Array<{ updated_at: string }>) =>
+  rows.reduce((latest, row) => {
+    const timestamp = Date.parse(row.updated_at);
+    if (Number.isNaN(timestamp)) {
+      return latest;
+    }
+    return Math.max(latest, timestamp);
+  }, 0);

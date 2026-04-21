@@ -41,8 +41,8 @@ export const api = {
   getMarketStatus: () => request<MarketStatusResponse>("/market/status"),
   getQuotes: (market: Market, page = 1, pageSize = 50) =>
     request<QuotesResponse>(`/market/quotes?market=${market}&page=${page}&page_size=${pageSize}`),
-  refreshMarketData: (limit = 120) =>
-    request<{ updated: number }>(`/market/refresh?limit=${limit}`, { method: "POST" }),
+  refreshMarketData: (limit = 120, mode: "quotes" | "full" = "quotes") =>
+    request<{ updated: number }>(`/market/refresh?limit=${limit}&mode=${mode}`, { method: "POST" }),
   getPriceHistory: (symbol: string, period = "1y", interval = "1d") =>
     request<PriceHistoryItem[]>(
       `/market/history/${symbol}?period=${encodeURIComponent(period)}&interval=${encodeURIComponent(interval)}`,

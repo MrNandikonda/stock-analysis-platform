@@ -91,6 +91,38 @@ class MarketService:
 
         return updated
 
+    async def refresh_quotes(self, symbols: Iterable[str] | None = None, limit: int | None = None) -> int:
+        query: Select[tuple[Stock]] = select(Stock)
+        if symbols:
+            query = query.where(Stock.symbol.in_(list(symbols)))
+        else:
+            query = query.outerjoin(StockMetric, StockMetric.symbol == Stock.symbol).order_by(
+                StockMetric.updated_at.asc().nullsfirst(),
+                Stock.symbol.asc(),
+            )
+        if limit:
+            query = query.limit(limit)
+
+        stocks = (await self.session.execute(query)).scalars().all()
+        updated = 0
+        for stock in stocks:
+            quote = await self.yfinance.get_quote(stock.symbol, stock.exchange)
+            metric_payload = {
+                "symbol": stock.symbol,
+                "exchange": stock.exchange,
+                "price": float(quote["price"]),
+                "change_1d": quote.get("change_1d"),
+                "volume": quote.get("volume"),
+                "updated_at": datetime.now(tz=timezone.utc).replace(tzinfo=None),
+            }
+
+            stmt = sqlite_insert(StockMetric).values(**metric_payload)
+            stmt = stmt.on_conflict_do_update(index_elements=["symbol"], set_=metric_payload)
+            await self.session.execute(stmt)
+            updated += 1
+
+        return updated
+
     async def refresh_watchlist_metrics(self) -> int:
         symbol_rows = (
             await self.session.execute(
@@ -100,7 +132,7 @@ class MarketService:
         symbols = sorted(set(symbol_rows.all()))
         if not symbols:
             return 0
-        return await self.refresh_metrics(symbols=symbols)
+        return await self.refresh_quotes(symbols=symbols)
 
     async def get_quotes(self, market: str = "ALL", page: int = 1, page_size: int = 50) -> dict:
         query = select(StockMetric, Stock).join(Stock, Stock.symbol == StockMetric.symbol)
