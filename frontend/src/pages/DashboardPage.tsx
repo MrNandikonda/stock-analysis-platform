@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart3, DatabaseZap, Flame, Timer } from "lucide-react";
+import { BarChart3, BrainCircuit, DatabaseZap, Flame, Radar, Timer } from "lucide-react";
 
 import { MarketStatusPanel } from "@/components/MarketStatusPanel";
 import { QuotesTable } from "@/components/QuotesTable";
@@ -52,9 +52,55 @@ export const DashboardPage = () => {
   const activeRows = streamedQuotes?.length ? streamedQuotes : quotesQuery.data?.items ?? [];
   const topMovers = [...activeRows].sort((a, b) => (b.change_1d ?? 0) - (a.change_1d ?? 0)).slice(0, 5);
   const biggestVolumes = [...activeRows].sort((a, b) => (b.volume ?? 0) - (a.volume ?? 0)).slice(0, 5);
+  const summaries = aiSummariesQuery.data?.filter(Boolean) ?? [];
+  const activeAISummaries = summaries.filter((summary) => summary?.enabled).length;
 
   return (
     <div className="space-y-5">
+      <Card className="hero-glow grid gap-5 overflow-hidden p-5 md:grid-cols-[1.45fr_0.85fr]">
+        <div className="relative">
+          <Badge className="mb-4" tone="positive">
+            Live public deployment
+          </Badge>
+          <h2 className="font-display text-2xl font-semibold text-white sm:text-4xl">
+            Scan markets, explain moves, and keep watchlists alive.
+          </h2>
+          <p className="muted mt-3 max-w-2xl text-sm leading-6">
+            Your dashboard blends quote polling, SSE updates, AI watchlist summaries, and cached fundamentals into a
+            single cockpit that stays light enough for this laptop.
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <HeroStat label="Market" value={market} />
+            <HeroStat label="Currency" value={currency} />
+            <HeroStat label="AI watchlists" value={`${activeAISummaries}/${watchlistQuery.data?.length ?? 0}`} />
+          </div>
+        </div>
+        <div className="relative rounded-[1.35rem] border border-aqua/20 bg-slate-950/45 p-4">
+          <div className="mb-4 flex items-center gap-2 text-aqua">
+            <Radar size={18} />
+            <span className="text-sm font-semibold">Signal radar</span>
+          </div>
+          <div className="space-y-3">
+            {topMovers.slice(0, 4).map((item, index) => (
+              <div key={item.symbol} className="rounded-2xl border border-slate-300/10 bg-white/[0.03] p-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-display text-lg text-white">{item.symbol}</span>
+                  <span className={(item.change_1d ?? 0) >= 0 ? "positive" : "negative"}>
+                    {formatNumber(item.change_1d, 2)}%
+                  </span>
+                </div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-800">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-aqua to-amber-300"
+                    style={{ width: `${Math.min(100, Math.max(12, 35 + Math.abs(item.change_1d ?? 0) * 8 + index * 5))}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
       <MarketStatusPanel status={statusQuery.data} />
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -96,7 +142,7 @@ export const DashboardPage = () => {
         </Card>
       )}
 
-      <Card className="space-y-4">
+      <Card className="space-y-4 hover:border-aqua/25">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-display text-lg text-white">Unified Market Watch</h2>
@@ -109,14 +155,17 @@ export const DashboardPage = () => {
         <QuotesTable rows={activeRows} currency={currency} onSymbolClick={setSelectedSymbol} />
       </Card>
 
-      <Card className="space-y-4">
+      <Card className="space-y-4 hover:border-aqua/25">
         <div>
-          <h2 className="font-display text-lg text-white">Watchlists</h2>
+          <h2 className="flex items-center gap-2 font-display text-lg text-white">
+            <BrainCircuit size={18} className="text-aqua" />
+            AI watchlist deck
+          </h2>
           <p className="muted text-xs">Unified view for NSE and US symbols.</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {(watchlistQuery.data ?? []).map((watchlist) => (
-            <div key={watchlist.id} className="rounded-xl border border-slate-500/25 bg-slate-900/40 p-3">
+            <div key={watchlist.id} className="rounded-2xl border border-slate-300/15 bg-slate-950/35 p-3 transition hover:-translate-y-0.5 hover:border-aqua/30">
               {aiSummariesQuery.data?.find((summary) => summary?.watchlist_id === watchlist.id) ? (
                 <div className="mb-2 flex items-center justify-between">
                   <Badge tone="neutral">
@@ -170,14 +219,21 @@ const MetricCard = ({
   subtitle: string;
   icon: ReactElement;
 }) => (
-  <Card className="flex items-start justify-between">
+  <Card className="flex items-start justify-between hover:-translate-y-0.5 hover:border-aqua/25">
     <div>
       <p className="text-xs uppercase tracking-wide text-slate-300">{title}</p>
       <p className="mt-1 font-display text-2xl text-white">{value}</p>
       <p className="muted text-xs">{subtitle}</p>
     </div>
-    <div className="rounded-lg bg-slate-800/40 p-2 text-glacier">{icon}</div>
+    <div className="rounded-2xl border border-aqua/15 bg-aqua/10 p-2 text-aqua">{icon}</div>
   </Card>
+);
+
+const HeroStat = ({ label, value }: { label: string; value: string }) => (
+  <div className="rounded-2xl border border-slate-300/15 bg-slate-950/40 p-3">
+    <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">{label}</p>
+    <p className="mt-1 font-display text-xl text-white">{value}</p>
+  </div>
 );
 
 const average = (values: number[]) => {

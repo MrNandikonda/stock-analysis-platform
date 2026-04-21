@@ -19,9 +19,9 @@ export const MarketStatusPanel = ({ status }: MarketStatusPanelProps) => {
 
   return (
     <Card className="grid gap-4 sm:grid-cols-2">
-      <section className="rounded-xl border border-slate-500/20 bg-slate-800/25 p-4">
+      <section className="rounded-[1.35rem] border border-slate-300/15 bg-slate-950/35 p-4 transition hover:border-aqua/25">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="font-display text-base text-white">NSE</h3>
+          <h3 className="font-display text-base text-white">NSE session</h3>
           <Badge tone={status.nse.is_open ? "positive" : "negative"}>
             {status.nse.is_open ? "Open" : "Closed"}
           </Badge>
@@ -29,7 +29,7 @@ export const MarketStatusPanel = ({ status }: MarketStatusPanelProps) => {
         <p className="muted text-sm">Session: {status.nse.session} IST</p>
         <p className="muted mt-1 text-sm">Local Time: {new Date(status.nse.local_time).toLocaleTimeString()}</p>
       </section>
-      <section className="rounded-xl border border-slate-500/20 bg-slate-800/25 p-4">
+      <section className="rounded-[1.35rem] border border-slate-300/15 bg-slate-950/35 p-4 transition hover:border-aqua/25">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="font-display text-base text-white">NYSE / NASDAQ</h3>
           <Badge tone={status.nyse.is_open ? "positive" : "negative"}>
@@ -46,4 +46,3 @@ export const MarketStatusPanel = ({ status }: MarketStatusPanelProps) => {
     </Card>
   );
 };
-

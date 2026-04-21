@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
+import { PageHeader } from "@/components/PageHeader";
+import { StatusPill } from "@/components/StatusPill";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -57,6 +59,18 @@ export const PortfolioPage = () => {
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        eyebrow="Portfolio · Local ledger"
+        title="Holdings control room"
+        subtitle="Track positions, allocation, unrealized P&L, day change, and XIRR from your self-hosted SQLite ledger."
+        actions={
+          <>
+            <StatusPill tone="info">{holdingsQuery.data?.length ?? 0} holdings</StatusPill>
+            <StatusPill tone={(summaryQuery.data?.unrealized_pnl ?? 0) >= 0 ? "ok" : "fail"}>P&L live</StatusPill>
+          </>
+        }
+      />
+
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard label="Total Invested" value={formatNumber(summaryQuery.data?.total_invested ?? 0, 2)} />
         <StatCard label="Current Value" value={formatNumber(summaryQuery.data?.total_value ?? 0, 2)} />
@@ -66,7 +80,7 @@ export const PortfolioPage = () => {
       </section>
 
       <section className="grid gap-5 lg:grid-cols-[1fr_1.2fr]">
-        <Card className="space-y-3">
+        <Card className="panel-elevated space-y-3">
           <h3 className="font-display text-lg text-white">Add Holding</h3>
           <Input value={symbol} onChange={(event) => setSymbol(event.target.value.toUpperCase())} placeholder="Symbol" />
           <Input value={quantity} onChange={(event) => setQuantity(event.target.value)} placeholder="Quantity" type="number" />
@@ -123,7 +137,7 @@ export const PortfolioPage = () => {
         </div>
       </section>
 
-      <Card className="space-y-3">
+      <Card className="panel-elevated space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-display text-lg text-white">Holdings</h3>
           <Badge tone="neutral">{holdingsQuery.data?.length ?? 0}</Badge>
@@ -165,8 +179,7 @@ export const PortfolioPage = () => {
 
 const StatCard = ({ label, value }: { label: string; value: string }) => (
   <Card className="space-y-1">
-    <p className="text-xs uppercase tracking-wide text-slate-400">{label}</p>
-    <p className="font-display text-xl text-white">{value}</p>
+    <p className="label-eyebrow">{label}</p>
+    <p className="font-mono text-xl text-foreground">{value}</p>
   </Card>
 );
-

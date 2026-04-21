@@ -10,12 +10,11 @@ export const Badge = ({ className, tone = "neutral", ...props }: BadgeProps) => 
   <span
     className={cn(
       "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
-      tone === "neutral" && "bg-slate-500/20 text-slate-200",
-      tone === "positive" && "bg-mint/20 text-mint",
-      tone === "negative" && "bg-red-500/20 text-red-300",
+      tone === "neutral" && "border border-border-strong bg-muted text-muted-foreground",
+      tone === "positive" && "border border-bull/25 bg-bull/10 text-bull",
+      tone === "negative" && "border border-bear/25 bg-bear/10 text-bear",
       className,
     )}
     {...props}
   />
 );
-

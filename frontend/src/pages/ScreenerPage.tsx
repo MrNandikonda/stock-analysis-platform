@@ -3,7 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Save } from "lucide-react";
 
 import { QuotesTable } from "@/components/QuotesTable";
+import { PageHeader } from "@/components/PageHeader";
 import { ScreenerBuilder } from "@/components/ScreenerBuilder";
+import { StatusPill } from "@/components/StatusPill";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -77,7 +79,19 @@ export const ScreenerPage = () => {
 
   return (
     <div className="space-y-5">
-      <Card className="space-y-4">
+      <PageHeader
+        eyebrow="Scanner · Server-side"
+        title="Screener command board"
+        subtitle="Compose AND/OR filters across price, volume, valuation, fundamentals, technicals, and F&O signals."
+        actions={
+          <>
+            <StatusPill tone="info">{market}</StatusPill>
+            <StatusPill tone="ai">500ms debounce</StatusPill>
+          </>
+        }
+      />
+
+      <Card className="panel-elevated space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-display text-lg text-white">Screener Filters</h2>
@@ -119,7 +133,7 @@ export const ScreenerPage = () => {
         <ScreenerBuilder filters={filters} onChange={setFilters} />
       </Card>
 
-      <Card className="space-y-4">
+      <Card className="panel-elevated space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-display text-lg text-white">Screener Results</h3>
           <Badge tone="neutral">

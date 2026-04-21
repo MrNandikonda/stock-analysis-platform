@@ -10,11 +10,11 @@ type QuotesTableProps = {
 const INR_PER_USD = 83.2;
 
 export const QuotesTable = ({ rows, onSymbolClick, currency = "USD" }: QuotesTableProps) => (
-  <div className="overflow-hidden rounded-2xl border border-slate-500/20 bg-slate-950/50">
+  <div className="overflow-hidden rounded-[1.35rem] border border-slate-300/15 bg-slate-950/55 shadow-inner">
     <div className="max-h-[500px] overflow-auto">
       <table className="min-w-full text-sm">
-        <thead className="sticky top-0 bg-slate-900/90">
-          <tr className="text-left text-xs uppercase tracking-wide text-slate-300">
+        <thead className="sticky top-0 bg-slate-950/95 backdrop-blur">
+          <tr className="text-left text-xs uppercase tracking-[0.16em] text-slate-400">
             <th className="px-3 py-3">Symbol</th>
             <th className="px-3 py-3">Exchange</th>
             <th className="px-3 py-3">Price</th>
@@ -30,10 +30,10 @@ export const QuotesTable = ({ rows, onSymbolClick, currency = "USD" }: QuotesTab
           {rows.map((row) => {
             const convertedPrice = currency === "INR" && row.exchange !== "NSE" ? row.price * INR_PER_USD : row.price;
             return (
-              <tr key={`${row.symbol}-${row.exchange}`} className="border-t border-slate-700/45 hover:bg-slate-700/15">
+              <tr key={`${row.symbol}-${row.exchange}`} className="border-t border-slate-800/80 transition hover:bg-aqua/5">
                 <td className="px-3 py-3">
                   <button
-                    className="font-semibold text-glacier hover:text-sky-300"
+                    className="rounded-lg px-2 py-1 font-semibold text-aqua transition hover:bg-aqua/10 hover:text-cyan-200"
                     onClick={() => onSymbolClick?.(row.symbol)}
                   >
                     {row.symbol}
@@ -61,4 +61,3 @@ export const QuotesTable = ({ rows, onSymbolClick, currency = "USD" }: QuotesTab
     </div>
   </div>
 );
-

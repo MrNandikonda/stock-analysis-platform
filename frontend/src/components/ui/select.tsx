@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 export const Select = ({ className, children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) => (
   <select
     className={cn(
-      "w-full rounded-lg border border-slate-500/40 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 outline-none ring-sunrise/60 focus:ring",
+      "w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground outline-none ring-ring focus:border-ring focus:ring",
       className,
     )}
     {...props}
@@ -13,4 +13,3 @@ export const Select = ({ className, children, ...props }: SelectHTMLAttributes<H
     {children}
   </select>
 );
-

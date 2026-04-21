@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BellPlus, BrainCircuit, FileUp, Play, PlusCircle, Save } from "lucide-react";
 
+import { PageHeader } from "@/components/PageHeader";
+import { StatusPill } from "@/components/StatusPill";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -160,8 +162,23 @@ export const WatchlistsPage = () => {
   const neutralFactors = analysisDetailQuery.data?.analysis.factors.filter((item) => item.factor_type === "neutral") ?? [];
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[0.95fr_1.2fr_1.15fr]">
-      <Card className="space-y-4">
+    <div className="space-y-5">
+      <PageHeader
+        eyebrow="Watchlists · AI analysis"
+        title="Watchlist intelligence board"
+        subtitle="Manage symbols, alerts, scheduled AI analysis, source health, and stock-level reasoning from one command surface."
+        actions={
+          <>
+            <StatusPill tone="info">{watchlistsQuery.data?.length ?? 0} lists</StatusPill>
+            <StatusPill tone={aiStatusQuery.data?.ai_analysis_enabled ? "ai" : "warn"}>
+              {aiStatusQuery.data?.ai_analysis_enabled ? "AI Ready" : "AI Disabled"}
+            </StatusPill>
+          </>
+        }
+      />
+
+      <div className="grid gap-5 xl:grid-cols-[0.95fr_1.2fr_1.15fr]">
+      <Card className="panel-elevated space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg text-white">Watchlists</h2>
           <Badge>{watchlistsQuery.data?.length ?? 0}</Badge>
@@ -216,7 +233,7 @@ export const WatchlistsPage = () => {
       </Card>
 
       <div className="space-y-5">
-        <Card className="space-y-3">
+        <Card className="panel-elevated space-y-3">
           <h3 className="font-display text-base text-white">Manage Symbols</h3>
           <Select
             value={selectedWatchlistId ? String(selectedWatchlistId) : ""}
@@ -265,7 +282,7 @@ export const WatchlistsPage = () => {
           </Button>
         </Card>
 
-        <Card className="space-y-4">
+        <Card className="panel-elevated space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-display text-base text-white">AI Watchlist Settings</h3>
@@ -376,7 +393,7 @@ export const WatchlistsPage = () => {
           </div>
         </Card>
 
-        <Card className="space-y-3">
+        <Card className="panel-elevated space-y-3">
           <h3 className="font-display text-base text-white">Alerts</h3>
           <Input value={alertSymbol} onChange={(event) => setAlertSymbol(event.target.value.toUpperCase())} placeholder="Symbol" />
           <Select value={alertCondition} onChange={(event) => setAlertCondition(event.target.value)}>
@@ -403,7 +420,7 @@ export const WatchlistsPage = () => {
       </div>
 
       <div className="space-y-5">
-        <Card className="space-y-4">
+        <Card className="panel-elevated space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-display text-base text-white">AI Summary</h3>
@@ -469,7 +486,7 @@ export const WatchlistsPage = () => {
           </div>
         </Card>
 
-        <Card className="space-y-4">
+        <Card className="panel-elevated space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-display text-base text-white">Stock Analysis Detail</h3>
@@ -522,6 +539,7 @@ export const WatchlistsPage = () => {
             </div>
           </div>
         </Card>
+      </div>
       </div>
     </div>
   );

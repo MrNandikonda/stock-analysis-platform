@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { CandlestickPanel } from "@/components/CandlestickPanel";
+import { PageHeader } from "@/components/PageHeader";
+import { StatusPill } from "@/components/StatusPill";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -46,7 +48,19 @@ export const ChartsPage = () => {
 
   return (
     <div className="space-y-5">
-      <Card className="grid gap-3 sm:grid-cols-4">
+      <PageHeader
+        eyebrow="Charts · Technical workspace"
+        title="Price action terminal"
+        subtitle="Inspect cached/fresh OHLCV data, options context, and technical timeframes without leaving the cockpit."
+        actions={
+          <>
+            <StatusPill tone="info">{selectedSymbol}</StatusPill>
+            <StatusPill tone="warn">{timeframe}</StatusPill>
+          </>
+        }
+      />
+
+      <Card className="panel-elevated grid gap-3 sm:grid-cols-4">
         <Input value={symbolInput} onChange={(event) => setSymbolInput(event.target.value.toUpperCase())} />
         <Select value={exchange} onChange={(event) => setExchange(event.target.value)}>
           <option value="NSE">NSE</option>
@@ -69,7 +83,7 @@ export const ChartsPage = () => {
 
       <CandlestickPanel symbol={selectedSymbol} rows={historyQuery.data ?? []} />
 
-      <Card className="space-y-3">
+      <Card className="panel-elevated space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-display text-lg text-white">F&O Snapshot</h3>
           <Badge tone="neutral">{exchange === "NSE" ? "NSE Options Chain" : "US Options Snapshot"}</Badge>
@@ -86,8 +100,8 @@ export const ChartsPage = () => {
 };
 
 const Metric = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-lg border border-slate-500/20 bg-slate-900/40 p-3">
-    <p className="text-xs uppercase tracking-wide text-slate-400">{label}</p>
-    <p className="mt-1 text-lg font-semibold text-slate-100">{value}</p>
+  <div className="rounded-md border border-border bg-background-elevated/60 p-3">
+    <p className="label-eyebrow">{label}</p>
+    <p className="mt-1 font-mono text-lg font-semibold text-foreground">{value}</p>
   </div>
 );

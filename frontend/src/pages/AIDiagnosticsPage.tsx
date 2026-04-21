@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { PageHeader } from "@/components/PageHeader";
+import { StatusPill } from "@/components/StatusPill";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { api } from "@/lib/api";
@@ -20,22 +22,27 @@ export const AIDiagnosticsPage = () => {
 
   return (
     <div className="space-y-5">
-      <Card className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="font-display text-lg text-white">AI Control Plane</h2>
-            <p className="muted text-xs">Provider readiness, job health, and safety guardrails.</p>
-          </div>
-          <Badge tone={statusQuery.data?.ai_analysis_enabled ? "positive" : "neutral"}>
-            {statusQuery.data?.ai_analysis_enabled ? "Enabled" : "Disabled"}
-          </Badge>
-        </div>
+      <PageHeader
+        eyebrow="AI Ops · Diagnostics"
+        title="AI control plane"
+        subtitle="Provider readiness, job health, source health, token summary, and safety guardrails."
+        actions={
+          <>
+            <StatusPill tone={statusQuery.data?.ai_analysis_enabled ? "ok" : "warn"}>
+              {statusQuery.data?.ai_analysis_enabled ? "Enabled" : "Disabled"}
+            </StatusPill>
+            <StatusPill tone="info">{diagnosticsQuery.data?.recent_jobs.length ?? 0} jobs</StatusPill>
+          </>
+        }
+      />
+
+      <Card className="panel-elevated space-y-3">
         <p className="text-sm text-slate-200">{diagnosticsQuery.data?.admin_summary ?? "Loading diagnostics..."}</p>
       </Card>
 
       <section className="grid gap-3 lg:grid-cols-2">
         {(statusQuery.data?.providers ?? []).map((provider) => (
-          <Card key={provider.provider_name} className="space-y-2">
+          <Card key={provider.provider_name} className="panel-elevated space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="font-display text-base text-white">{provider.provider_name}</h3>
               <Badge tone={provider.ready ? "positive" : "neutral"}>{provider.status}</Badge>
@@ -52,7 +59,7 @@ export const AIDiagnosticsPage = () => {
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[1.3fr_0.9fr]">
-        <Card className="space-y-3">
+        <Card className="panel-elevated space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-display text-base text-white">Recent Jobs</h3>
             <Badge>{diagnosticsQuery.data?.recent_jobs.length ?? 0}</Badge>
