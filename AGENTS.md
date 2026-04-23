@@ -1,101 +1,171 @@
 # AGENTS.md
 
 ## Purpose
-This file defines how Codex should work in `stock-analysis-platform`.
-Goal: deliver small, safe, repo-native changes without drifting from the lightweight architecture.
 
-## Repo Architecture (Current)
-- Backend: FastAPI app in `backend/app/main.py` with routers in `backend/app/api/`, business logic in `backend/app/services/`, adapters in `backend/app/data_sources/`, and schemas in `backend/app/schemas/`.
-- Database: SQLite via async SQLAlchemy (`backend/app/core/database.py`) with models in `backend/app/models/entities.py` and `backend/app/models/ai_entities.py`.
+This file is the top-level agent operating guide for `stock-analysis-platform`.
+
+It is intended for GitHub Copilot Coding Agent and other repo-aware coding agents. Use it together with:
+- `.github/copilot-instructions.md` for repository-wide Copilot guidance.
+- `.github/instructions/*.instructions.md` for path-specific specialist guidance.
+
+Goal: deliver small, safe, repo-native changes without drifting from the lightweight stock screening and analysis architecture.
+
+## Agent Model
+
+Use a practical multi-specialist model. The agent doing the work remains responsible for the final result, but should apply the relevant specialist guidance:
+
+- Repo architect: `.github/instructions/repo-architect.instructions.md`
+- Frontend specialist: `.github/instructions/frontend.instructions.md`
+- Backend/API specialist: `.github/instructions/backend.instructions.md`
+- Market data specialist: `.github/instructions/market-data.instructions.md`
+- Quant/risk specialist: `.github/instructions/quant-risk.instructions.md`
+- DevOps/Docker/Windows specialist: `.github/instructions/devops-docker.instructions.md`
+- QA/security/performance specialist: `.github/instructions/qa-security.instructions.md`
+
+For cross-stack work, apply all relevant specialist files and validate the contract between layers.
+
+## Repo Architecture
+
+- Backend: FastAPI app in `backend/app/main.py` with routers in `backend/app/api/`, business logic in `backend/app/services/`, adapters in `backend/app/data_sources/`, schemas in `backend/app/schemas/`, and AI backend under `backend/app/ai/`.
+- Database: SQLite via async SQLAlchemy in `backend/app/core/database.py`, models in `backend/app/models/entities.py` and `backend/app/models/ai_entities.py`.
 - Migrations: SQL-first migrations in `backend/migrations/*.sql`, applied by `backend/migrations/run_migrations.py` with tracking in `schema_migrations`.
-- Scheduler: APScheduler jobs defined in `backend/app/services/scheduler_service.py`, run in a dedicated process/container via `backend/app/scheduler_runner.py`.
-- Frontend: React 18 + Vite + TypeScript in `frontend/src/` (pages, components, hooks, store, worker). API client lives in `frontend/src/lib/api.ts`.
-- API shape: versioned under `/api/v1` (market, screener, watchlists, portfolio, news, health).
-- Deployment: Docker Compose with 3 services (`backend`, `scheduler`, `frontend`) and shared SQLite volume `screener_data`; nginx in frontend proxies `/api/` to backend.
+- Scheduler: APScheduler jobs in `backend/app/services/scheduler_service.py`, run by `backend/app/scheduler_runner.py` in a dedicated process/container.
+- Frontend: React 18 + Vite + TypeScript in `frontend/src/`; API client in `frontend/src/lib/api.ts`; shared types in `frontend/src/lib/types.ts`.
+- API shape: versioned under `/api/v1` for market, screener, watchlists, portfolio, news, health, and AI routes.
+- Deployment: Docker Compose services `backend`, `scheduler`, `frontend`, and optional `cloudflared`, with shared SQLite volume `screener_data`; nginx proxies `/api/` to backend.
+
+## Current Product Scope
+
+Confirmed workflows include:
+- Dashboard quote polling and SSE updates.
+- Market status and symbol search.
+- Screener filters and presets.
+- Technical charts and options snapshots.
+- Watchlists, CSV import, and alerts.
+- Portfolio holdings, summary, import, and history snapshots.
+- RSS news sentiment and fallback earnings calendar.
+- AI watchlist settings, scheduled/manual runs, stock-level analysis, and diagnostics.
+
+The app is research support only. Do not turn it into a broker, trading bot, automated execution system, or financial adviser.
 
 ## Non-Negotiable Constraints
-- Preserve the existing stack: FastAPI + SQLite + React/Vite + Docker Compose.
-- Keep changes additive and focused. Do not do broad refactors unless explicitly requested.
-- Avoid heavy dependencies/infrastructure (no Redis/Postgres/Kafka/Celery/etc. unless explicitly requested).
-- Protect laptop-friendly runtime profile (low memory/CPU, bounded background work).
 
-## Required Workflow (Always)
+- Preserve the existing stack: FastAPI + SQLite + React/Vite + Docker Compose.
+- Keep changes additive and focused.
+- Avoid heavy infrastructure such as Redis, Postgres, Kafka, Celery, Kubernetes, or broker integrations unless explicitly requested.
+- Protect the laptop-friendly runtime profile: low memory, bounded CPU, bounded scheduler work, and no unbounded provider fanout.
+- Keep finance features framed as screening, research, scenario analysis, and risk-aware insight.
+
+## Required Workflow
+
 1. Inspect
-- Read relevant files first (`api`, `services`, `models`, `migrations`, `frontend/lib/api.ts`, affected pages/components).
-- Confirm existing patterns before editing.
+- Read relevant files before editing.
+- Check dirty state and do not overwrite user changes.
+- Confirm existing patterns in routers, services, schemas, frontend API/types, migrations, and tests.
 
 2. Plan
-- State minimal file-level plan.
-- Call out contract, migration, or scheduler risks before coding.
+- State a minimal file-level plan before implementation.
+- Call out API contract, migration, scheduler, Docker, provider/freshness, financial-output, and security risks when applicable.
 
 3. Implement
 - Make the smallest cohesive patch.
 - Reuse existing service/router/state patterns.
-- Keep API and schema changes backward-compatible where possible.
+- Keep API and schema changes backward-compatible where practical.
+- Keep API calls centralized in `frontend/src/lib/api.ts`.
+- Keep shared frontend contracts in `frontend/src/lib/types.ts`.
 
 4. Validate
-- Run the appropriate checks from the validation matrix below.
+- Run the smallest sufficient checks from the matrix below.
 - Report what passed, what was not run, and why.
 
 ## Safe Change Rules
-- Database:
-  - Prefer additive migrations (`backend/migrations/00xx_*.sql`).
-  - Never rewrite old migration files already tracked by `schema_migrations`.
-  - Keep ORM model updates aligned with SQL migrations.
-- API/backend:
-  - Keep `API_PREFIX=/api/v1` compatibility.
-  - Update request/response schemas when endpoint payloads change.
-  - Preserve commit/rollback behavior in service methods.
-- Scheduler:
-  - Keep jobs idempotent, bounded, and resilient (no unbounded loops or high fanout).
-  - Preserve single-instance guardrails (`max_instances=1`, coalescing) unless explicitly justified.
-- Frontend:
-  - Keep API calls centralized in `frontend/src/lib/api.ts`.
-  - Keep shared types in `frontend/src/lib/types.ts`.
-  - Preserve realtime behavior (SSE stream + polling fallback) unless intentionally changed.
 
-## Where Future AI Watchlist-Analysis Code Should Live
-- Core AI domain logic: `backend/app/ai/`
-  - Orchestration/services: `backend/app/ai/services/`
-  - Provider abstraction/implementations: `backend/app/ai/providers/` (add if needed)
-  - Typed AI contracts: `backend/app/ai/schemas/` (add if needed)
-- Persistence boundary for AI writes: extend `backend/app/ai/services/persistence_service.py` instead of scattering direct DB writes.
-- AI schema changes: new additive SQL migrations in `backend/migrations/` and matching ORM updates in `backend/app/models/ai_entities.py`.
-- AI API surface: new router modules in `backend/app/api/` and registration in `backend/app/main.py`.
-- AI UI surface: watchlist-focused UI under `frontend/src/pages/WatchlistsPage.tsx` plus new components/hooks/types as needed.
-- Progress tracking: update `docs/ai_watchlist_analysis_tracker.md` for phase/status changes.
+Database:
+- Prefer additive migrations in `backend/migrations/00xx_*.sql`.
+- Never rewrite old migrations already tracked by `schema_migrations` unless explicitly approved.
+- Keep ORM models aligned with SQL migrations.
 
-## Validation Matrix (Run What Applies)
-- Backend/service/API changes:
-  - `cd backend`
-  - `python -m compileall app`
-  - `python -m pytest -q`
-  - If API behavior changed, smoke test affected endpoints (at minimum `/api/v1/health` plus changed routes).
+Backend/API:
+- Preserve `API_PREFIX=/api/v1` compatibility.
+- Keep route handlers thin and business logic in services.
+- Preserve async SQLAlchemy session and commit/rollback behavior.
+- Update Pydantic schemas when endpoint payloads change.
 
-- Frontend changes:
-  - `cd frontend`
-  - `npm run build`
-  - Verify affected page flow in dev mode if behavior/UI logic changed.
-  - If API contracts changed, confirm `frontend/src/lib/types.ts` and `frontend/src/lib/api.ts` are consistent.
+Scheduler:
+- Keep jobs idempotent, bounded, and resilient.
+- Preserve `max_instances=1`, coalescing, and safe rollback unless explicitly justified.
+- Do not add high-fanout or long-running scheduler work without resource controls.
 
-- Migration/schema changes:
-  - `python backend/migrations/run_migrations.py` on a clean test DB via `DB_PATH`.
-  - Re-run migrations to confirm idempotency.
-  - Confirm ORM imports/compile still pass after model updates.
+Frontend:
+- Preserve TanStack Query for server state and Zustand for lightweight app state.
+- Preserve SSE stream plus polling fallback unless intentionally changed.
+- Keep expensive chart/indicator calculations out of the main thread.
 
-- Scheduler changes:
-  - `cd backend`
-  - `python -m compileall app`
-  - `python -m pytest -q`
-  - Start scheduler process (`python -m app.scheduler_runner`) long enough to confirm startup without immediate failure.
-  - Verify job changes preserve bounded cadence and safe rollback on failure.
+Market data:
+- Current providers are yfinance, nsepython, RSS feeds, local-summary AI, and optional OpenAI.
+- Do not invent providers, fields, exchanges, or freshness guarantees.
+- Clearly distinguish live, cached, stale, missing, error, fallback, and synthetic data when surfaced.
 
-- Docker/deployment changes:
-  - `docker compose config`
-  - Build affected service images before finalizing.
-  - Keep shared volume and service responsibilities intact (`backend` API, `scheduler` jobs, `frontend` static/nginx proxy).
+AI:
+- Keep core AI domain logic under `backend/app/ai/`.
+- Keep AI writes behind `backend/app/ai/services/persistence_service.py`.
+- Keep specialist tools least-privilege and read-only unless explicitly intended.
+- Update `docs/ai_watchlist_analysis_tracker.md` for meaningful AI phase/status changes.
 
-## Definition of Done
-- Change is minimal, reversible, and consistent with existing architecture.
-- Required validations were run (or explicitly documented if unavailable).
-- Documentation/comments are updated only where they add operational value.
+Security:
+- Never hardcode secrets.
+- Never expose server-side provider keys to the frontend.
+- Preserve optional Basic Auth, CORS, and endpoint rate limiting.
+
+## Validation Matrix
+
+Documentation-only changes:
+```bash
+git diff --check
+```
+
+Backend/service/API changes:
+```bash
+cd backend
+python -m compileall app
+python -m pytest -q
+```
+
+Frontend changes:
+```bash
+cd frontend
+npm run build
+```
+
+Migration/schema changes:
+```bash
+DB_PATH=/tmp/stocks_migration_test.db python backend/migrations/run_migrations.py
+DB_PATH=/tmp/stocks_migration_test.db python backend/migrations/run_migrations.py
+```
+
+Scheduler changes:
+```bash
+cd backend
+python -m compileall app
+python -m pytest -q
+python -m app.scheduler_runner
+```
+Start the scheduler only long enough to confirm startup, then stop it cleanly.
+
+Docker/deployment changes:
+```bash
+docker compose config
+docker compose build backend
+docker compose build frontend
+```
+Build only affected services when practical.
+
+## Definition Of Done
+
+- Change is minimal, reversible, and consistent with the current architecture.
+- Relevant Copilot/agent specialist guidance was applied.
+- API/schema/frontend contracts remain aligned.
+- Data freshness and fallback behavior are honest.
+- Scheduler and Docker resource constraints are preserved.
+- Relevant checks were run or explicitly documented as not run.
+- Docs are updated only where they add operational value.
