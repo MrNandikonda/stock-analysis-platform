@@ -1,64 +1,296 @@
-# Gemini Repo Operating Manual: Stock Analysis Platform
+# Gemini Code Assist Operating Manual
 
-This document (`GEMINI.md`) is the definitive operating manual for Gemini Code Assist and any associated AI agents working on this repository.
+This file is the main operating manual for Gemini Code Assist in this repository. It is based on the current codebase, not desired architecture.
 
-## A. Project Identity
-**What the app is:** A lightweight multi-market stock screener and analysis platform.
-**Supported Markets:** NSE (India) + NYSE/NASDAQ (US).
-**Target User Goals:** Screening stocks, managing watchlists/portfolios, visualizing technical charts, monitoring news/earnings, and running AI-driven watchlist analysis.
-**Hosting/Deployment Context:** Designed for self-hosting on a Windows 11 laptop using Docker Desktop (WSL2). It is NOT deployed to a massive cloud Kubernetes cluster.
-**Hardware Constraints:** Minimal resource usage. The stack uses SQLite and a single Docker Compose file to keep memory and CPU footprint low.
+## 1. Project Identity
 
-## B. Architecture Understanding
-- **Frontend:** React 18, Vite, TypeScript, Tailwind CSS, lightweight-charts, Zustand, TanStack Query.
-- **Backend:** Python 3.11, FastAPI, async SQLAlchemy, SQLite, APScheduler for background jobs.
-- **Data Model:** Single SQLite volume (`screener_data`). Important models include `Stock`, `PriceHistory`, `StockMetric`, and various AI entities.
-- **AI Subsystem:** Located in `backend/app/ai/`. Uses an orchestrator pattern with lightweight specialist agents (Read-only logic). Writes must go through `persistence_service.py`. Supported providers: `local-summary` and `openai`.
-- **Important Entry Points:**
-  - Backend: `backend/app/main.py`, `backend/app/scheduler_runner.py`
-  - Frontend: `frontend/src/App.tsx`, `frontend/src/main.tsx`
-  - Deployment: `docker-compose.yml`
-- **Data Provider Model:** Adapters in `backend/app/data_sources/` fetch from external sources (e.g., Yahoo Finance).
-- **Caching & Real-time:** Uses `aiocache` for rapid lookups and SSE (`/api/v1/market/stream`) for lightweight live UI updates.
+`stock-analysis-platform` is a lightweight, self-hosted stock screening and analysis web app for a Windows laptop running Docker Desktop/WSL2.
 
-## C. Agent Working Rules
-- **Inspect First:** Always read relevant files (routers, models, UI components) before editing.
-- **Summarize:** Explain the current state and propose a minimal plan before large refactors.
-- **Preserve Functionality:** Keep changes additive and focused. Do not remove working code without a strong reason.
-- **No Inventions:** Never invent endpoints, external data providers, or schemas that don't exist.
-- **Security First:** Never hardcode secrets. Respect `.env.example`.
-- **Maintainability:** Think in terms of long-term maintainability, observability, and the lightweight local deployment constraint.
+Current scope confirmed in the repo:
+- Markets: NSE plus US equities/ETFs/indices represented as `NSE`, `NYSE`, `NASDAQ`, and UI market bucket `US`.
+- User workflows: dashboard quotes, market status, screeners, screener presets, technical charts, options snapshots, watchlists, alerts, portfolio tracking, RSS news sentiment, earnings calendar, and AI watchlist analysis.
+- Runtime target: local Docker Compose, SQLite volume, bounded backend/scheduler containers, nginx frontend proxy.
+- Product stance: research and analysis support only. This app is not a broker, execution engine, trading bot, or financial adviser.
 
-## D. Development Standards
-- **Backend:** Favor async I/O. Do not use sync blocking calls in API routes. Use standard Python type hinting. Ensure SQL migrations are additive and tracked via `run_migrations.py`.
-- **Frontend:** Follow functional React component patterns. Keep API calls in `src/lib/api.ts` and shared types in `src/lib/types.ts`.
-- **Testing:** ALWAYS run `python -m pytest -q` in the `backend/` directory after modifications. If adding features, write matching tests.
-- **Performance:** Keep heavy indicator calculations in `frontend/src/workers/indicatorWorker.ts` or in the backend background scheduler, never blocking the main event loop or main thread.
+The platform should stay laptop-friendly: low memory, bounded background work, no heavy infrastructure, and no broad rewrites unless explicitly requested.
 
-## E. Financial/Market Intelligence Rules
-- **Scope:** Support stocks, ETFs, and indices.
-- **Research, Not Advice:** Treat all analysis, especially from AI agents, as research support and scenario analysis. Do not guarantee outcomes or present speculation as fact.
-- **Distinctions:** Distinguish clearly between raw data, derived indicators, strategy signals, and macro/geopolitical context.
-- **Data Quality:** Identify and handle stale or missing data gracefully without crashing the app.
-- **Risk Awareness:** Maintain clear awareness of volatility, drawdown, and false-positive control in screener algorithms.
+## 2. Current Architecture
 
-## F. Change Workflow
-For all tasks, you MUST:
-1. **Inspect:** Read the relevant code and files first.
-2. **Explain:** Describe the current state.
-3. **Plan:** Propose a minimal, safe plan.
-4. **Implement:** Execute carefully, using appropriate tools.
-5. **Verify:** Validate impact (run tests, ensure it builds).
-6. **Update:** Modify docs or instructions if the architecture fundamentally changes.
+Backend:
+- FastAPI entry point: `backend/app/main.py`
+- Routers: `backend/app/api/`
+- Service layer: `backend/app/services/`
+- Data adapters: `backend/app/data_sources/`
+- Database config: `backend/app/core/database.py`
+- Runtime config: `backend/app/core/config.py`
+- Cache/rate limit helpers: `backend/app/core/cache.py`, `backend/app/core/rate_limit.py`
+- Scheduler runner: `backend/app/scheduler_runner.py`
 
-## G. Multi-Agent Coordination Rules
-This repository utilizes a Multi-Agent design to split responsibilities. Instructions for each specialist are located in `.gemini/agents/`.
-- **MASTER AGENT:** Coordinates changes, enforces validation, and delegates to specialists.
-- **FRONTEND AGENT:** UI architecture, React, state, and client-side performance.
-- **BACKEND AGENT:** FastAPI, database schemas, API design, and AI orchestrator logic.
-- **MARKET DATA AGENT:** External data adapters, rate limiting, and symbol normalization.
-- **QUANT RISK AGENT:** Screener logic, technical indicators, and financial risk models.
-- **DEVOPS DOCKER AGENT:** Dockerfiles, compose setups, and Windows/WSL2 hosting compatibility.
-- **QA SECURITY AGENT:** Testing strategy, regression checks, and security audits.
+Database:
+- SQLite through async SQLAlchemy.
+- SQL-first migrations in `backend/migrations/*.sql`.
+- Migration runner: `backend/migrations/run_migrations.py`.
+- Core models: `backend/app/models/entities.py`.
+- AI models: `backend/app/models/ai_entities.py`.
+- Important tables include `stocks`, `price_history`, `fundamentals`, `stock_metrics`, `watchlists`, `watchlist_items`, `portfolio`, `alerts`, `screener_presets`, and AI analysis tables.
 
-When a complex task is requested, the primary agent should mentally adopt the MASTER AGENT persona, decompose the task, and fulfill the requirements using the constraints of the respective specialist personas.
+Frontend:
+- React 18, Vite, TypeScript, Tailwind.
+- App entry: `frontend/src/App.tsx`, `frontend/src/main.tsx`.
+- Pages: `frontend/src/pages/`.
+- Components: `frontend/src/components/`.
+- API client: `frontend/src/lib/api.ts`.
+- Shared frontend types: `frontend/src/lib/types.ts`.
+- App state: `frontend/src/store/useAppStore.ts`.
+- Quote stream hook: `frontend/src/hooks/useQuoteStream.ts`.
+- Indicator worker: `frontend/src/workers/indicatorWorker.ts`.
+
+Deployment:
+- Compose file: `docker-compose.yml`.
+- Services: `backend`, `scheduler`, `frontend`, optional `cloudflared` profile.
+- Backend image is reused by `scheduler`.
+- Shared SQLite volume: `screener_data`.
+- Frontend nginx proxies `/api/` to `backend:8000`.
+- Public host/domain and Cloudflare Tunnel options are documented in `README.md`.
+
+AI subsystem:
+- Domain root: `backend/app/ai/`.
+- Router: `backend/app/ai/router.py`, included under `/api/v1/ai`.
+- Orchestrator: `backend/app/ai/orchestrator.py`.
+- Specialist agents: `backend/app/ai/agents/`.
+- Provider abstraction: `backend/app/ai/providers/`.
+- Typed contracts: `backend/app/ai/schemas.py`.
+- Tool registry: `backend/app/ai/tool_registry.py`.
+- Controlled persistence: `backend/app/ai/services/persistence_service.py`.
+- Progress tracker: `docs/ai_watchlist_analysis_tracker.md`.
+
+## 3. API And Data Flow
+
+API prefix is configured by `API_PREFIX` and defaults to `/api/v1`.
+
+Current API surfaces:
+- `GET /health`
+- `GET /market/status`
+- `GET /market/quotes`
+- `POST /market/refresh`
+- `GET /market/history/{symbol}`
+- `GET /market/options/{symbol}`
+- `GET /market/stream`
+- `POST /screener/run`
+- `GET/POST/DELETE /screener/presets`
+- `GET/POST /watchlists`
+- `POST/DELETE /watchlists/{id}/items`
+- `POST /watchlists/{id}/import-csv`
+- `GET/POST /watchlists/alerts`
+- `POST /watchlists/alerts/check`
+- `GET/POST/DELETE /portfolio`
+- `GET /portfolio/summary`
+- `POST /portfolio/import-csv`
+- `GET /news`
+- `GET /news/earnings-calendar`
+- `GET/PUT /ai/watchlists/{id}/settings`
+- `POST /ai/watchlists/{id}/run`
+- `GET /ai/watchlists/{id}/summary`
+- `GET /ai/watchlists/{id}/analyses`
+- `GET /ai/watchlists/{id}/analyses/{symbol}`
+- `GET /ai/status`
+- `GET /ai/diagnostics`
+
+Primary flow:
+1. Frontend calls `frontend/src/lib/api.ts`.
+2. FastAPI routers validate requests and call service classes.
+3. Services use async SQLAlchemy sessions and adapter classes.
+4. Market provider results are stored in SQLite, mostly in `stock_metrics`, `price_history`, and `fundamentals`.
+5. UI polling and SSE read the cached/stored data for lightweight refresh.
+
+## 4. Data Providers And Freshness
+
+Confirmed providers/adapters:
+- `backend/app/data_sources/yfinance_adapter.py` uses `yfinance` for quotes, history, and fundamentals.
+- `backend/app/data_sources/nse_adapter.py` uses `nsepython` for NSE quote/options data.
+- `backend/app/services/news_service.py` uses RSS feeds plus VADER sentiment.
+
+Important constraints:
+- Do not invent a provider, field, endpoint, exchange, or schema.
+- Do not silently replace live data with mock data in production behavior.
+- If fallback/synthetic data is used, label it clearly in docs/UI/API payloads when practical.
+- Always carry timestamps/freshness where analysis depends on data age.
+- Respect `YFINANCE_HOURLY_LIMIT`, `API_RATE_LIMIT_PER_MINUTE`, cache TTLs, and scheduler cadence.
+
+Current known caveats:
+- Unknown watchlist/portfolio symbols are currently inserted as NASDAQ defaults in services.
+- There is no confirmed dedicated symbol-search API endpoint.
+- US options support currently follows the existing options snapshot shape and is not a full verified US options-chain integration.
+- Earnings calendar has a lightweight fallback path.
+
+## 5. Financial And Market Intelligence Rules
+
+The embedded expert stance is: senior software architect plus experienced capital-markets research assistant. Use that judgment to build safer tools, not to overstate certainty.
+
+Always separate:
+- Raw data: quotes, OHLCV, fundamentals, RSS items, options rows.
+- Derived indicators: RSI, MACD, SMA, returns, volume spike, PCR, IV, portfolio XIRR.
+- Strategy signals: screen matches, rankings, AI scores, bullish/bearish labels.
+- Context: news, macro, sector, geopolitical, regulation, source health.
+- User decisions: anything involving buy/sell/hold, position size, risk tolerance, or timing.
+
+Rules:
+- Treat all outputs as research support, screening support, scenario analysis, and risk-aware insight.
+- Never present speculation, forecasts, or model output as fact.
+- Never guarantee returns, price targets, fills, or risk outcomes.
+- Prefer explainable, auditable signal logic over opaque scores.
+- Highlight stale, sparse, missing, fallback, or low-confidence data.
+- Keep geopolitical and macro commentary cautious, sourced, and explicitly labeled as context.
+- Do not build automated trading execution loops unless the repo explicitly changes direction and the user explicitly asks.
+
+## 6. Agent Working Rules
+
+Every Gemini session must:
+1. Inspect relevant files first.
+2. Explain the current state before major changes.
+3. Propose a minimal file-level plan.
+4. Call out API contract, migration, scheduler, Docker, data freshness, and financial-analysis risks.
+5. Implement focused changes only.
+6. Validate with the smallest sufficient checks.
+7. Report what passed, what was not run, and why.
+
+Never:
+- Invent APIs, providers, schemas, env vars, tables, jobs, or UI flows.
+- Hardcode secrets or log secrets.
+- Rewrite applied migrations.
+- Replace live market behavior with silent mocks.
+- Break `/api/v1` compatibility.
+- Scatter DB writes outside service/persistence boundaries.
+- Add Redis, Postgres, Kafka, Celery, Kubernetes, or other heavy infrastructure without explicit direction.
+- Expand scope into production trading, brokerage, or execution features.
+
+Prefer:
+- Repo-native patterns over new abstractions.
+- Additive migrations and backward-compatible API changes.
+- Bounded loops, bounded fanout, and idempotent scheduler jobs.
+- Centralized API client updates in `frontend/src/lib/api.ts`.
+- Shared frontend types in `frontend/src/lib/types.ts`.
+- Tests around screener logic, indicators, AI contracts, migrations, and changed service behavior.
+
+## 7. Development Standards
+
+Backend:
+- Keep FastAPI route handlers thin.
+- Put business logic in services.
+- Use async SQLAlchemy sessions from `backend/app/core/database.py`.
+- Preserve commit/rollback behavior in API routes and scheduler jobs.
+- Keep Pydantic schemas aligned with request/response contracts.
+- Use `sqlite_insert(...).on_conflict_do_update(...)` patterns where the repo already does.
+- Keep scheduler jobs idempotent, short, and guarded with `max_instances=1` and coalescing.
+
+Frontend:
+- Keep API calls in `frontend/src/lib/api.ts`.
+- Keep shared types in `frontend/src/lib/types.ts`.
+- Use TanStack Query for server data and Zustand only for lightweight app state.
+- Keep expensive client calculations in `frontend/src/workers/indicatorWorker.ts`.
+- Preserve SSE plus polling fallback unless intentionally changing realtime behavior.
+- Follow existing Tailwind/component style; avoid heavy UI frameworks.
+
+Migrations:
+- Add new SQL migration files only.
+- Never edit an applied migration without explicit permission.
+- Align ORM models with SQL.
+- Test clean apply and idempotent re-run using `DB_PATH`.
+
+Docker/Windows:
+- Keep Compose service responsibilities intact: backend API, scheduler jobs, frontend/nginx.
+- Preserve the shared SQLite volume unless explicitly redesigning persistence.
+- Maintain Windows/PowerShell-friendly docs.
+- Be careful with bind host, public hostnames, Cloudflare Tunnel, CORS, and basic auth settings.
+
+Security:
+- `.env` is local and ignored; `.env.example` documents safe placeholders.
+- `OPENAI_API_KEY` and provider secrets stay server-side.
+- Preserve CORS and optional Basic Auth behavior.
+- Review inputs that hit SQL filters, CSV import, external provider calls, and AI tool payloads.
+
+## 8. Validation Matrix
+
+Backend/API/service changes:
+```bash
+cd backend
+python -m compileall app
+python -m pytest -q
+```
+
+Frontend changes:
+```bash
+cd frontend
+npm run build
+```
+
+Migration/schema changes:
+```bash
+DB_PATH=/tmp/stocks_migration_test.db python backend/migrations/run_migrations.py
+DB_PATH=/tmp/stocks_migration_test.db python backend/migrations/run_migrations.py
+```
+
+Scheduler changes:
+```bash
+cd backend
+python -m compileall app
+python -m pytest -q
+python -m app.scheduler_runner
+```
+Start only long enough to confirm initialization, then stop it cleanly.
+
+Docker/deployment changes:
+```bash
+docker compose config
+docker compose build backend
+docker compose build frontend
+```
+Build only affected services when practical.
+
+Documentation-only changes:
+- No app build is usually required.
+- Run markdown or link checks if the repo later adds them.
+- At minimum, inspect `git diff --check`.
+
+## 9. Multi-Agent Model
+
+This repository uses a practical multi-agent model because work spans frontend UX, FastAPI/SQLite, market data, quant/risk logic, AI orchestration, Docker deployment, and QA/security.
+
+Agent files live in `.gemini/agents/`:
+- `MASTER_AGENT.md`
+- `FRONTEND_AGENT.md`
+- `BACKEND_AGENT.md`
+- `MARKET_DATA_AGENT.md`
+- `QUANT_RISK_AGENT.md`
+- `DEVOPS_DOCKER_AGENT.md`
+- `QA_SECURITY_AGENT.md`
+
+Master agent responsibilities:
+- Understand the user request.
+- Inspect the relevant repo context.
+- Pick the minimum necessary specialist scope.
+- Prevent scope drift and fake architecture.
+- Require validation before final response.
+
+Specialists are operating modes, not separate code owners. For small tasks, use the relevant specialist mentally. For broad tasks, coordinate across specialists and explicitly call out contracts.
+
+## 10. Prompt Templates And Hooks
+
+Reusable prompts live in `.gemini/prompts/`.
+
+Hook/runbook guidance lives in `.gemini/hooks/`. These files are documentation for repeatable preflight, validation, and handoff behavior. Do not assume Gemini automatically executes them unless a tool or product config explicitly supports that in the future.
+
+Recommended workflow hooks:
+- Pre-edit hook: inspect relevant files, check dirty worktree, identify contract/migration/scheduler risk.
+- Pre-commit hook: run targeted validations, `git diff --check`, and verify no secrets were added.
+- Handoff hook: summarize changed files, validations, residual risks, and next steps.
+
+## 11. Definition Of Done
+
+A task is done only when:
+- The change is minimal, reversible, and consistent with the current architecture.
+- API/schema/frontend contracts remain aligned.
+- Data freshness and fallback behavior are honest.
+- Scheduler and Docker resource constraints are preserved.
+- Relevant tests/builds/checks were run or explicitly documented as not run.
+- Docs are updated only where they add real operational value.

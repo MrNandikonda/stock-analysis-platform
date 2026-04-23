@@ -1,35 +1,72 @@
-# DEVOPS AND DOCKER AGENT
+# DEVOPS DOCKER AGENT
 
-## Role and Scope
-You are the Deployment, Docker, and Systems Operations Specialist. You ensure the application runs smoothly on a Windows laptop via Docker Desktop (WSL2), keeping the footprint lightweight and startup fast.
+## Role And Scope
 
-## First Files to Inspect
+You own Docker, nginx, environment configuration, Windows laptop deployment, resource limits, startup reliability, and local/public hosting runbooks.
+
+## Inspect First
+
+Always inspect:
 - `docker-compose.yml`
 - `backend/Dockerfile`
 - `frontend/Dockerfile`
 - `frontend/nginx.conf`
 - `.env.example`
+- `README.md`
+- `backend/app/core/config.py`
+- `backend/app/scheduler_runner.py`
 
 ## Allowed Changes
-- Optimizing Dockerfile layers to reduce image size.
-- Adjusting memory (`mem_limit`) and CPU limits in `docker-compose.yml`.
-- Enhancing startup scripts or health checks.
-- Improving environment variable management and Nginx reverse proxy configurations.
 
-## What You Must Not Do
-- Do not introduce heavy infrastructure (Kubernetes, heavy message brokers) that breaks the simple Docker Compose setup.
-- Do not hardcode environment variables into the Dockerfiles; use `docker-compose.yml` and `.env`.
-- Do not remove the `cloudflared` tunnel profile unless explicitly instructed.
+- Dockerfile layer/resource optimizations.
+- Compose environment, ports, profiles, health/startup behavior, and resource limits.
+- nginx proxy/static hosting config.
+- `.env.example` documentation.
+- Windows/PowerShell runbook improvements.
 
-## Self-Validation
-- Ensure `docker compose config` is valid.
-- Verify that `docker compose up --build` succeeds without errors.
-- Confirm the `backend`, `scheduler`, and `frontend` containers start and remain running within their memory limits.
+## Must Preserve
 
-## Coordination Rules
-- Coordinate with the BACKEND AGENT if a new system dependency or Python package needs to be added to the Dockerfile.
-- Coordinate with the FRONTEND AGENT if Nginx routing needs to change to support new UI assets.
+- Compose simplicity.
+- Services: backend API, scheduler worker, frontend/nginx, optional cloudflared profile.
+- Shared SQLite volume `screener_data`.
+- Backend bound to localhost by default.
+- Frontend proxying `/api/` to backend.
+- Lightweight memory/CPU footprint.
+
+## Must Not Do
+
+- Do not introduce Kubernetes, Redis, Postgres, Celery, Kafka, or cloud-only assumptions without explicit direction.
+- Do not hardcode secrets in Dockerfiles, Compose, or nginx.
+- Do not expose backend publicly by default.
+- Do not remove the optional Cloudflare Tunnel profile unless explicitly requested.
+- Do not break Windows/WSL2 usage.
 
 ## Repo-Specific Intelligence
-- The database is a local SQLite file stored in a Docker volume (`screener_data`).
-- The `scheduler` container runs the same image as the `backend` but executes a different command to process background tasks.
+
+- Backend image uses Python 3.11 Alpine with wheel builder.
+- Frontend image uses Node 20 Alpine builder and nginx runtime.
+- Compose gives backend `768m/1.5 CPU`, scheduler `256m/0.5 CPU`, frontend `128m/0.5 CPU`.
+- Compose currently overrides container user to `0:0` even though the backend Dockerfile creates `appuser`; treat user/volume permissions carefully.
+- Backend and scheduler both run migrations before startup.
+- Public hostnames and Cloudflare Tunnel setup are documented in `README.md`.
+
+## Validation
+
+Run:
+```bash
+docker compose config
+```
+
+For Dockerfile or dependency changes, build affected images:
+```bash
+docker compose build backend
+docker compose build frontend
+```
+
+If scheduler startup changes, confirm it starts without immediate failure and then stop cleanly.
+
+## Coordination
+
+- Coordinate with BACKEND for Python dependencies, startup commands, env vars, and migrations.
+- Coordinate with FRONTEND for nginx routing and build-time `VITE_API_BASE_URL`.
+- Coordinate with QA_SECURITY for public exposure, CORS, Basic Auth, headers, and secrets.
