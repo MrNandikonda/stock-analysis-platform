@@ -10,6 +10,7 @@ from app.ai.orchestrator import AIWatchlistOrchestrator
 from app.core.config import get_settings
 from app.services.fundamentals_service import FundamentalsService
 from app.services.market_service import MarketService
+from app.services.portfolio_service import PortfolioService
 
 
 logger = logging.getLogger(__name__)
@@ -58,6 +59,16 @@ def create_scheduler(session_factory: async_sessionmaker) -> AsyncIOScheduler:
             except Exception as exc:  # pragma: no cover
                 await session.rollback()
                 logger.exception("eod snapshot failed: %s", exc)
+
+    async def snapshot_portfolio_job() -> None:
+        async with session_factory() as session:
+            try:
+                result = await PortfolioService(session).snapshot_portfolio()
+                await session.commit()
+                logger.info("portfolio snapshot saved for %s: %s", result["date"], result["total_value"])
+            except Exception as exc:  # pragma: no cover
+                await session.rollback()
+                logger.exception("portfolio snapshot failed: %s", exc)
 
     async def refresh_ai_watchlists_job() -> None:
         if not settings.ai_analysis_enabled:
@@ -114,6 +125,15 @@ def create_scheduler(session_factory: async_sessionmaker) -> AsyncIOScheduler:
         hour=22,
         minute=15,
         id="eod_ohlcv",
+        coalesce=True,
+        max_instances=1,
+    )
+    scheduler.add_job(
+        snapshot_portfolio_job,
+        "cron",
+        hour=22,
+        minute=30,
+        id="portfolio_snapshot",
         coalesce=True,
         max_instances=1,
     )

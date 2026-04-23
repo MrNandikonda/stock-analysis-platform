@@ -1,45 +1,38 @@
-FROM python:3.11-alpine AS builder
+FROM python:3.11-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
-RUN apk add --no-cache --virtual .build-deps \
-    gcc \
-    musl-dev \
-    libffi-dev \
-    openssl-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
+RUN python -m venv /opt/venv
 COPY requirements-runtime.txt .
-RUN pip install --upgrade pip wheel \
-    && pip wheel --no-cache-dir --wheel-dir /wheels -r requirements-runtime.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements-runtime.txt
 
-FROM python:3.11-alpine AS runtime
+FROM python:3.11-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     APP_ENV=prod \
-    API_PREFIX=/api/v1
+    API_PREFIX=/api/v1 \
+    PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
-RUN apk add --no-cache \
-    libstdc++ \
-    tzdata
-
-COPY --from=builder /wheels /wheels
-COPY requirements-runtime.txt .
-RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements-runtime.txt \
-    && rm -rf /wheels
+COPY --from=builder /opt/venv /opt/venv
 
 COPY app ./app
 COPY migrations ./migrations
 
-RUN adduser -D appuser && chown -R appuser:appuser /app
+RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
-

@@ -22,6 +22,11 @@ async def portfolio_summary(session: AsyncSession = Depends(get_db_session)) -> 
     return await PortfolioService(session).summary()
 
 
+@router.get("/history")
+async def portfolio_history(days: int = 90, session: AsyncSession = Depends(get_db_session)) -> list[dict]:
+    return await PortfolioService(session).get_equity_curve(days=days)
+
+
 @router.post("")
 async def add_holding(payload: PortfolioHoldingRequest, session: AsyncSession = Depends(get_db_session)) -> dict:
     result = await PortfolioService(session).add_holding(
@@ -50,4 +55,3 @@ async def import_portfolio(payload: ImportPortfolioCsvRequest, session: AsyncSes
     created = await PortfolioService(session).import_csv(payload.csv_data)
     await session.commit()
     return {"created": created}
-

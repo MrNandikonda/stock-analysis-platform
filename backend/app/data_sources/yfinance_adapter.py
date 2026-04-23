@@ -126,6 +126,66 @@ class YFinanceAdapter:
         except Exception:
             return self._synthetic_fundamentals(symbol)
 
+    @async_ttl_cache(ttl_seconds=300)
+    async def get_options_chain(self, symbol: str) -> dict[str, Any]:
+        normalized = _normalize_symbol(symbol, "US")
+        try:
+            await rate_limiter.acquire("yfinance")
+            ticker = await asyncio.to_thread(yf.Ticker, normalized)
+            
+            # Fetch underlying price for accurate max-pain calculations
+            fast_info = await asyncio.to_thread(lambda: ticker.fast_info or {})
+            underlying_price = float(fast_info.get("lastPrice") or 0.0)
+
+            expiries = await asyncio.to_thread(lambda: ticker.options)
+            if not expiries:
+                return {"symbol": symbol, "expiry_dates": [], "rows": [], "underlying_price": underlying_price}
+
+            # Fetch the nearest expiry chain
+            nearest_expiry = expiries[0]
+            chain = await asyncio.to_thread(ticker.option_chain, nearest_expiry)
+            
+            calls = chain.calls
+            puts = chain.puts
+            
+            # Map calls and puts by strike price
+            strikes_data = {}
+            
+            for _, row in calls.iterrows():
+                strike = float(row["strike"])
+                strikes_data[strike] = {
+                    "strike": strike,
+                    "ce_oi": int(row.get("openInterest") or 0),
+                    "ce_volume": int(row.get("volume") or 0),
+                    "ce_ltp": float(row.get("lastPrice") or 0.0),
+                    "pe_oi": 0,
+                    "pe_volume": 0,
+                    "pe_ltp": 0.0
+                }
+                
+            for _, row in puts.iterrows():
+                strike = float(row["strike"])
+                if strike not in strikes_data:
+                    strikes_data[strike] = {"strike": strike, "ce_oi": 0, "ce_volume": 0, "ce_ltp": 0.0}
+                
+                strikes_data[strike]["pe_oi"] = int(row.get("openInterest") or 0)
+                strikes_data[strike]["pe_volume"] = int(row.get("volume") or 0)
+                strikes_data[strike]["pe_ltp"] = float(row.get("lastPrice") or 0.0)
+
+            # Sort rows ascending by strike
+            rows = [strikes_data[s] for s in sorted(strikes_data.keys())]
+
+            return {
+                "symbol": symbol,
+                "underlying_price": underlying_price,
+                "expiry_dates": list(expiries),
+                "current_expiry": nearest_expiry,
+                "rows": rows
+            }
+        except Exception as exc:
+            logger.warning("yfinance options chain fetch failed for %s: %s", symbol, exc)
+            return {"symbol": symbol, "expiry_dates": [], "rows": [], "underlying_price": 0.0}
+
     def _synthetic_quote(self, symbol: str, exchange: str) -> dict[str, Any]:
         rng = _stable_rng(symbol)
         base_price = 50 + rng.random() * 900

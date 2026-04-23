@@ -7,7 +7,8 @@ from datetime import date, datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.entities import PortfolioHolding, Stock, StockMetric
+from app.models.entities import PortfolioHistory, PortfolioHolding, Stock, StockMetric
+from app.services.market_service import MarketService
 
 
 class PortfolioService:
@@ -66,10 +67,15 @@ class PortfolioService:
         symbol = symbol.upper().strip()
         stock = (await self.session.execute(select(Stock).where(Stock.symbol == symbol))).scalar_one_or_none()
         if not stock:
+            market_service = MarketService(self.session)
+            search_results = await market_service.search_symbol(symbol)
+            if not search_results:
+                raise ValueError(f"Invalid or unrecognized symbol: {symbol}")
+            best_match = search_results[0]
             self.session.add(
                 Stock(
                     symbol=symbol,
-                    exchange="NASDAQ",
+                    exchange=best_match["exchange"],
                     name=symbol,
                     sector="Unknown",
                     industry="Unknown",
@@ -121,14 +127,17 @@ class PortfolioService:
                 continue
 
             parsed_date = date.fromisoformat(buy_date) if buy_date else date.today()
-            await self.add_holding(
-                symbol=symbol,
-                quantity=float(quantity),
-                avg_price=float(avg_price),
-                buy_date=parsed_date,
-                asset_class=asset_class,
-            )
-            created += 1
+            try:
+                await self.add_holding(
+                    symbol=symbol,
+                    quantity=float(quantity),
+                    avg_price=float(avg_price),
+                    buy_date=parsed_date,
+                    asset_class=asset_class,
+                )
+                created += 1
+            except ValueError:
+                pass  # Skip invalid symbols during import
         return created
 
     async def summary(self) -> dict:
@@ -158,6 +167,43 @@ class PortfolioService:
             "holdings_count": len(holdings),
         }
 
+    async def snapshot_portfolio(self) -> dict:
+        summary = await self.summary()
+        today_str = date.today().isoformat()
+        
+        existing = (
+            await self.session.execute(
+                select(PortfolioHistory).where(
+                    PortfolioHistory.user_id == "local",
+                    PortfolioHistory.date == today_str
+                )
+            )
+        ).scalar_one_or_none()
+        
+        if existing:
+            existing.total_invested = summary["total_invested"]
+            existing.total_value = summary["total_value"]
+            existing.unrealized_pnl = summary["unrealized_pnl"]
+            existing.day_change = summary["day_change"]
+        else:
+            history_obj = PortfolioHistory(
+                user_id="local",
+                date=today_str,
+                total_invested=summary["total_invested"],
+                total_value=summary["total_value"],
+                unrealized_pnl=summary["unrealized_pnl"],
+                day_change=summary["day_change"],
+            )
+            self.session.add(history_obj)
+            
+        await self.session.flush()
+        return {"status": "success", "date": today_str, "total_value": summary["total_value"]}
+
+    async def get_equity_curve(self, days: int = 90) -> list[dict]:
+        query = select(PortfolioHistory).where(PortfolioHistory.user_id == "local").order_by(PortfolioHistory.date.desc()).limit(days)
+        history = (await self.session.execute(query)).scalars().all()
+        
+        return [{"date": h.date, "total_value": h.total_value, "total_invested": h.total_invested, "unrealized_pnl": h.unrealized_pnl} for h in reversed(history)]
 
 def _annualized_return(buy_date: date, invested: float, current_value: float) -> float:
     if invested <= 0 or current_value <= 0:
@@ -179,4 +225,3 @@ def _portfolio_xirr(holdings: list[dict]) -> float:
         weighted += value * holding["xirr"]
         total_value += value
     return (weighted / total_value) if total_value else 0.0
-

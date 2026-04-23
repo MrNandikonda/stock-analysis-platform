@@ -99,6 +99,22 @@ class PortfolioHolding(Base):
     asset_class: Mapped[str] = mapped_column(String(20), default="equity")
 
 
+class PortfolioHistory(Base):
+    __tablename__ = "portfolio_history"
+    __table_args__ = (
+        Index("ix_portfolio_history_user_date", "user_id", "date"),
+        UniqueConstraint("user_id", "date", name="uq_portfolio_history_user_date"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(String(50), default="local")
+    date: Mapped[str] = mapped_column(String(10), index=True)
+    total_invested: Mapped[float] = mapped_column(Float)
+    total_value: Mapped[float] = mapped_column(Float)
+    unrealized_pnl: Mapped[float] = mapped_column(Float)
+    day_change: Mapped[float] = mapped_column(Float)
+
+
 class Alert(Base):
     __tablename__ = "alerts"
     __table_args__ = (Index("ix_alerts_user_symbol", "user_id", "symbol"),)

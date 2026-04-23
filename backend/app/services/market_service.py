@@ -216,6 +216,32 @@ class MarketService:
             "page_size": page_size,
         }
 
+    async def search_symbol(self, query: str) -> list[dict]:
+        query = query.upper().strip()
+        results = []
+        
+        # Check NSE
+        nse_quote = await self.nse.get_quote(query)
+        if nse_quote.get("source") == "nse" and nse_quote.get("price") not in (None, 0):
+            results.append({
+                "symbol": query,
+                "exchange": "NSE",
+                "name": query,
+                "asset_type": "EQUITY"
+            })
+            
+        # Check US (YFinance)
+        yf_quote = await self.yfinance.get_quote(query, "US")
+        if yf_quote.get("source") == "yfinance" and yf_quote.get("price") not in (None, 0):
+            results.append({
+                "symbol": query,
+                "exchange": "NASDAQ",  # Safest default for valid US tickers
+                "name": query,
+                "asset_type": "EQUITY"
+            })
+            
+        return results
+
     async def get_price_history(
         self,
         symbol: str,
@@ -235,13 +261,14 @@ class MarketService:
             chain["max_pain"] = self.nse.calculate_max_pain(chain)
             return chain
 
-        # Basic US options support through yfinance by reusing synthetic fallback for resilience.
-        chain = await self.nse.get_options_chain(symbol)
-        chain["symbol"] = symbol
-        chain["pcr"] = self.nse.calculate_pcr(chain)
-        chain["iv"] = self.nse.calculate_iv(chain)
-        chain["max_pain"] = self.nse.calculate_max_pain(chain)
-        return chain
+        # Full US options support through yfinance
+        chain = await self.yfinance.get_options_chain(symbol)
+        if chain and chain.get("rows"):
+            # Reusing the existing mathematical calculators as they are standardized
+            chain["pcr"] = self.nse.calculate_pcr(chain)
+            chain["iv"] = self.nse.calculate_iv(chain)
+            chain["max_pain"] = self.nse.calculate_max_pain(chain)
+        return chain or {"symbol": symbol, "rows": [], "expiry_dates": []}
 
     def get_market_status(self) -> dict:
         now_utc = datetime.now(tz=timezone.utc)

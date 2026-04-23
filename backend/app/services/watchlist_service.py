@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.entities import Alert, Stock, StockMetric, Watchlist, WatchlistItem
+from app.services.market_service import MarketService
 
 
 class WatchlistService:
@@ -64,24 +65,32 @@ class WatchlistService:
 
     async def add_items(self, watchlist_id: int, symbols: list[str]) -> int:
         cleaned_symbols = sorted({symbol.strip().upper() for symbol in symbols if symbol.strip()})
+        market_service = MarketService(self.session)
+        
+        valid_symbols = []
         for symbol in cleaned_symbols:
             stock = (await self.session.execute(select(Stock).where(Stock.symbol == symbol))).scalar_one_or_none()
             if not stock:
+                search_results = await market_service.search_symbol(symbol)
+                if not search_results:
+                    continue  # Skip inserting invalid symbols
+                best_match = search_results[0]
                 self.session.add(
                     Stock(
                         symbol=symbol,
-                        exchange="NASDAQ",
+                        exchange=best_match["exchange"],
                         name=symbol,
                         sector="Unknown",
                         industry="Unknown",
                         market_cap=0.0,
-                        asset_type="EQUITY",
+                        asset_type=best_match["asset_type"],
                     )
                 )
+            valid_symbols.append(symbol)
         await self.session.flush()
 
         inserted = 0
-        for symbol in cleaned_symbols:
+        for symbol in valid_symbols:
             exists = (
                 await self.session.execute(
                     select(WatchlistItem).where(
@@ -179,4 +188,3 @@ def _is_triggered(condition: str, target: float, metric: StockMetric) -> bool:
     if condition == "volume_spike_gt":
         return (metric.volume_spike or 0) > target
     return False
-

@@ -113,4 +113,7 @@ PROMPTS: dict[str, PromptSpec] = {
 
 
 def get_prompt(name: str) -> PromptSpec:
-    return PROMPTS[name]
+    prompt = PROMPTS.get(name)
+    if not prompt:
+        raise ValueError(f"AI Prompt '{name}' not found in registry.")
+    return prompt

@@ -1,0 +1,46 @@
+================================================================================
+Bugs and Improvements List for Stock Analysis Platform
+================================================================================
+
+--------------------------------------------------------------------------------
+1. BUG: Unhandled KeyError in Prompt Registry
+--------------------------------------------------------------------------------
+- [FIXED] Cause: Unhandled KeyError in prompt registry could crash orchestrator.
+- [FIXED] Fix: Modified `get_prompt` to safely use `.get()` and raise a clear ValueError.
+
+--------------------------------------------------------------------------------
+2. IMPROVEMENT: Frontend Main Bundle Size Too Large (~792 kB)
+--------------------------------------------------------------------------------
+- [FIXED] Cause: React components and heavy libraries were bundled into a single large JS chunk.
+- [FIXED] Fix: Implemented `React.lazy` and `manualChunks` in Vite for vendor splitting.
+
+--------------------------------------------------------------------------------
+3. BUG/IMPROVEMENT: Defaulting Unknown Symbols to NASDAQ
+--------------------------------------------------------------------------------
+- [FIXED] Cause: The platform lacked a dedicated symbol-search API endpoint. Unknown symbols defaulted to "NASDAQ".
+- [FIXED] Fix: Implemented `/api/v1/market/search` to validate against YFinance/NSE. Refactored `watchlist_service.py` and `portfolio_service.py` to halt unvalidated ticker insertion.
+
+--------------------------------------------------------------------------------
+4. IMPROVEMENT: Backend Docker Image Bloat
+--------------------------------------------------------------------------------
+- [FIXED] Cause: Backend image was bloated by build tools and heavy dependencies.
+- [FIXED] Fix: Implemented multi-stage Dockerfile using `python:3.11-slim` to reduce size.
+
+--------------------------------------------------------------------------------
+5. BUG/CAVEAT: Incomplete US Options Chain Integration
+--------------------------------------------------------------------------------
+- [FIXED] Cause: US options support lacked a full verified options-chain integration.
+- [FIXED] Fix (Backend): Expanded `yfinance_adapter.py` and `market_service.py` to parse and normalize full put/call chains.
+- [FIXED] Fix (Frontend): Updated the frontend Options UI in `ChartsPage.tsx` to render a scrolling options chain matrix mapping calls and puts dynamically to strikes.
+
+--------------------------------------------------------------------------------
+6. IMPROVEMENT: Missing Frontend Testing Pipeline
+--------------------------------------------------------------------------------
+- [FIXED] Cause: The frontend relied purely on build validation (`npm run build`) without unit tests for complex math or state.
+- [FIXED] Fix: Introduced `Vitest` with React Testing Library. Created core tests targeting `indicatorWorker.ts` and `useAppStore.ts` to ensure UI calculation integrity.
+
+--------------------------------------------------------------------------------
+7. IMPROVEMENT: SQLite Write Contention Under High Load
+--------------------------------------------------------------------------------
+- [FIXED] Cause: SQLite write contention under high load.
+- [FIXED] Fix: Ensured SQLite PRAGMAs (WAL, NORMAL, busy_timeout) are correctly configured in `database.py`.

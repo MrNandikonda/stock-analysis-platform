@@ -33,6 +33,16 @@ async def market_quotes(
     return await service.get_quotes(market=market, page=page, page_size=page_size)
 
 
+@router.get("/search")
+async def search_market(
+    q: str = Query(..., min_length=1, description="Symbol to search for"),
+    session: AsyncSession = Depends(get_db_session),
+) -> dict:
+    service = MarketService(session)
+    results = await service.search_symbol(q)
+    return {"items": results}
+
+
 @router.post("/refresh")
 async def refresh_market_data(
     limit: int = Query(default=100, ge=1, le=500),

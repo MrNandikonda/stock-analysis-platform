@@ -85,15 +85,46 @@ export const ChartsPage = () => {
 
       <Card className="panel-elevated space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="font-display text-lg text-white">F&O Snapshot</h3>
-          <Badge tone="neutral">{exchange === "NSE" ? "NSE Options Chain" : "US Options Snapshot"}</Badge>
+          <h3 className="font-display text-lg text-white">Options Chain Matrix</h3>
+          <Badge tone="neutral">{exchange === "NSE" ? "NSE Options Chain" : "US Options Chain"}</Badge>
         </div>
         <div className="grid gap-3 sm:grid-cols-4">
           <Metric label="PCR" value={formatNumber(optionsQuery.data?.pcr ?? null, 2)} />
           <Metric label="IV" value={formatNumber(optionsQuery.data?.iv ?? null, 2)} />
           <Metric label="Max Pain" value={formatNumber(optionsQuery.data?.max_pain ?? null, 2)} />
-          <Metric label="Rows" value={String(optionsQuery.data?.rows?.length ?? 0)} />
+          <Metric label="Available Strikes" value={String(optionsQuery.data?.rows?.length ?? 0)} />
         </div>
+        
+        {optionsQuery.data?.rows && optionsQuery.data.rows.length > 0 && (
+          <div className="mt-4 max-h-96 overflow-y-auto overflow-x-auto rounded-md border border-border">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="sticky top-0 z-10 bg-background-elevated text-gray-400 shadow-[0_1px_0_rgba(255,255,255,0.1)]">
+                <tr>
+                  <th className="px-3 py-2 font-medium">CE OI</th>
+                  <th className="px-3 py-2 font-medium">CE Vol</th>
+                  <th className="px-3 py-2 font-medium">CE LTP</th>
+                  <th className="bg-white/5 px-3 py-2 text-center font-bold text-white">Strike</th>
+                  <th className="px-3 py-2 font-medium">PE LTP</th>
+                  <th className="px-3 py-2 font-medium">PE Vol</th>
+                  <th className="px-3 py-2 font-medium">PE OI</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {optionsQuery.data.rows.map((row: any) => (
+                  <tr key={row.strike} className="hover:bg-white/5 transition-colors">
+                    <td className="px-3 py-2">{formatNumber(row.ce_oi)}</td>
+                    <td className="px-3 py-2">{formatNumber(row.ce_volume)}</td>
+                    <td className="px-3 py-2 text-green-400">{formatNumber(row.ce_ltp, 2)}</td>
+                    <td className="bg-white/5 px-3 py-2 text-center font-bold text-white">{formatNumber(row.strike, 2)}</td>
+                    <td className="px-3 py-2 text-red-400">{formatNumber(row.pe_ltp, 2)}</td>
+                    <td className="px-3 py-2">{formatNumber(row.pe_volume)}</td>
+                    <td className="px-3 py-2">{formatNumber(row.pe_oi)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
     </div>
   );
