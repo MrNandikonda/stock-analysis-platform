@@ -1,55 +1,64 @@
-# Gemini AI Instructions for Stock Analysis Platform
+# Gemini Repo Operating Manual: Stock Analysis Platform
 
-This file (`GEMINI.md`) contains critical instructions and context for Gemini and other AI agents working on this project. Treat these instructions as foundational mandates that override general workflows.
+This document (`GEMINI.md`) is the definitive operating manual for Gemini Code Assist and any associated AI agents working on this repository.
 
-## Project Overview
-A lightweight multi-market stock screener (NSE + NYSE/NASDAQ) designed for self-hosting with Windows 11 + Docker Desktop (WSL2).
+## A. Project Identity
+**What the app is:** A lightweight multi-market stock screener and analysis platform.
+**Supported Markets:** NSE (India) + NYSE/NASDAQ (US).
+**Target User Goals:** Screening stocks, managing watchlists/portfolios, visualizing technical charts, monitoring news/earnings, and running AI-driven watchlist analysis.
+**Hosting/Deployment Context:** Designed for self-hosting on a Windows 11 laptop using Docker Desktop (WSL2). It is NOT deployed to a massive cloud Kubernetes cluster.
+**Hardware Constraints:** Minimal resource usage. The stack uses SQLite and a single Docker Compose file to keep memory and CPU footprint low.
 
-### Tech Stack
+## B. Architecture Understanding
+- **Frontend:** React 18, Vite, TypeScript, Tailwind CSS, lightweight-charts, Zustand, TanStack Query.
 - **Backend:** Python 3.11, FastAPI, async SQLAlchemy, SQLite, APScheduler for background jobs.
-- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS, lightweight-charts, Zustand for state, TanStack Query.
-- **Data/Infrastructure:** SQLite (single volume), Docker Compose.
-- **AI Subsystem:** Local orchestrator with lightweight specialist agents (Read-only, writes flow via persistence services). Support for `local-summary` and `openai` providers.
+- **Data Model:** Single SQLite volume (`screener_data`). Important models include `Stock`, `PriceHistory`, `StockMetric`, and various AI entities.
+- **AI Subsystem:** Located in `backend/app/ai/`. Uses an orchestrator pattern with lightweight specialist agents (Read-only logic). Writes must go through `persistence_service.py`. Supported providers: `local-summary` and `openai`.
+- **Important Entry Points:**
+  - Backend: `backend/app/main.py`, `backend/app/scheduler_runner.py`
+  - Frontend: `frontend/src/App.tsx`, `frontend/src/main.tsx`
+  - Deployment: `docker-compose.yml`
+- **Data Provider Model:** Adapters in `backend/app/data_sources/` fetch from external sources (e.g., Yahoo Finance).
+- **Caching & Real-time:** Uses `aiocache` for rapid lookups and SSE (`/api/v1/market/stream`) for lightweight live UI updates.
 
-## Development & Execution Workflows
+## C. Agent Working Rules
+- **Inspect First:** Always read relevant files (routers, models, UI components) before editing.
+- **Summarize:** Explain the current state and propose a minimal plan before large refactors.
+- **Preserve Functionality:** Keep changes additive and focused. Do not remove working code without a strong reason.
+- **No Inventions:** Never invent endpoints, external data providers, or schemas that don't exist.
+- **Security First:** Never hardcode secrets. Respect `.env.example`.
+- **Maintainability:** Think in terms of long-term maintainability, observability, and the lightweight local deployment constraint.
 
-### Backend Development
-- **Directory:** `backend/`
-- **Environment:** Use a virtual environment (`.venv`).
-- **Dependencies:** `pip install -r requirements.txt` and `pip install -r requirements-runtime.txt`.
-- **Database:** SQLite is used. Migrations are run via `python migrations/run_migrations.py`.
-- **Running Locally:** `uvicorn app.main:app --reload --port 8000`
-- **Testing:** ALWAYS run tests from within the `backend/` directory using:
-  ```powershell
-  python -m pytest -q
-  ```
-  Ensure all tests pass after making any backend changes. Tests include `test_screener_service.py`, `test_indicators.py`, `test_ai_analysis.py`.
+## D. Development Standards
+- **Backend:** Favor async I/O. Do not use sync blocking calls in API routes. Use standard Python type hinting. Ensure SQL migrations are additive and tracked via `run_migrations.py`.
+- **Frontend:** Follow functional React component patterns. Keep API calls in `src/lib/api.ts` and shared types in `src/lib/types.ts`.
+- **Testing:** ALWAYS run `python -m pytest -q` in the `backend/` directory after modifications. If adding features, write matching tests.
+- **Performance:** Keep heavy indicator calculations in `frontend/src/workers/indicatorWorker.ts` or in the backend background scheduler, never blocking the main event loop or main thread.
 
-### Frontend Development
-- **Directory:** `frontend/`
-- **Dependencies:** `npm install`
-- **Running Locally:** `npm run dev` (Runs on port 5173).
-- **Styling:** Tailwind CSS is heavily used.
-- **State Management:** Zustand (`src/store/`) and TanStack Query (`src/hooks/`, `src/lib/api.ts`).
+## E. Financial/Market Intelligence Rules
+- **Scope:** Support stocks, ETFs, and indices.
+- **Research, Not Advice:** Treat all analysis, especially from AI agents, as research support and scenario analysis. Do not guarantee outcomes or present speculation as fact.
+- **Distinctions:** Distinguish clearly between raw data, derived indicators, strategy signals, and macro/geopolitical context.
+- **Data Quality:** Identify and handle stale or missing data gracefully without crashing the app.
+- **Risk Awareness:** Maintain clear awareness of volatility, drawdown, and false-positive control in screener algorithms.
 
-## Architecture & Code Conventions
+## F. Change Workflow
+For all tasks, you MUST:
+1. **Inspect:** Read the relevant code and files first.
+2. **Explain:** Describe the current state.
+3. **Plan:** Propose a minimal, safe plan.
+4. **Implement:** Execute carefully, using appropriate tools.
+5. **Verify:** Validate impact (run tests, ensure it builds).
+6. **Update:** Modify docs or instructions if the architecture fundamentally changes.
 
-### Backend Rules
-- **Async I/O:** Favor `async` methods for API and data adapters.
-- **Database Interaction:** Use `async SQLAlchemy` and SQLite. Ensure that endpoints use injected DB sessions.
-- **Real-time Updates:** Prefer SSE (Server-Sent Events) over WebSockets for lightweight live updates (`GET /api/v1/market/stream`).
-- **AI Agents:** Specialist agents (in `backend/app/ai/agents/`) must be read-only and use narrow internal tools. Final writes MUST flow through controlled persistence services. Do NOT implement heavy worker queues (e.g., Celery/Redis); use the existing local SQLite persistence and scheduler loop.
+## G. Multi-Agent Coordination Rules
+This repository utilizes a Multi-Agent design to split responsibilities. Instructions for each specialist are located in `.gemini/agents/`.
+- **MASTER AGENT:** Coordinates changes, enforces validation, and delegates to specialists.
+- **FRONTEND AGENT:** UI architecture, React, state, and client-side performance.
+- **BACKEND AGENT:** FastAPI, database schemas, API design, and AI orchestrator logic.
+- **MARKET DATA AGENT:** External data adapters, rate limiting, and symbol normalization.
+- **QUANT RISK AGENT:** Screener logic, technical indicators, and financial risk models.
+- **DEVOPS DOCKER AGENT:** Dockerfiles, compose setups, and Windows/WSL2 hosting compatibility.
+- **QA SECURITY AGENT:** Testing strategy, regression checks, and security audits.
 
-### Frontend Rules
-- **Performance:** Indicator calculations must remain in browser workers (`src/workers/indicatorWorker.ts`).
-- **Data Fetching:** Use frontend query debouncing (500ms default) to avoid spamming the backend. Server-side filtering/pagination is required for large datasets.
-- **Component Design:** Use functional React components with hooks. Styling should follow the existing Tailwind configurations and custom UI components in `src/components/ui/`.
-
-## AI Subsystem Specifics
-- Avoid adding heavy infrastructure dependencies to the AI module.
-- Keep the fallback mode `local-summary` functional for offline use and testing.
-- When working on the AI feature, respect the `AI_ANALYSIS_ENABLED`, `OPENAI_API_KEY`, and `AI_DEFAULT_PROVIDER` configuration flags.
-
-## Operational Reminders
-- **Environment Variables:** Do not expose, log, or commit `.env` files. Reference `.env.example` to understand available configuration keys.
-- **Validation is Mandatory:** Before declaring a task complete, verify your changes by executing relevant linters, type checks, or unit tests. If you are fixing a bug, write a test to empirically reproduce it first.
+When a complex task is requested, the primary agent should mentally adopt the MASTER AGENT persona, decompose the task, and fulfill the requirements using the constraints of the respective specialist personas.
