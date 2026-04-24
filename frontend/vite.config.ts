@@ -1,11 +1,10 @@
 /// <reference types="vitest" />
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -29,10 +28,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'query-vendor': ['@tanstack/react-query'],
-          'charts-vendor': ['lightweight-charts'],
-        },
+          "react-vendor": ["react", "react-dom"],
+          "query-vendor": ["@tanstack/react-query"],
+          "charts-vendor": ["lightweight-charts"],
+        } as any,
       },
     },
   },
