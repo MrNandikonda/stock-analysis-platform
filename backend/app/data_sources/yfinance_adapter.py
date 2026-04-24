@@ -21,6 +21,29 @@ rate_limiter = DataSourceRateLimiter(
 logger = logging.getLogger(__name__)
 
 
+async def _yf_call_with_retries(func, retries: int = 3, base_delay: float = 1.0):
+    """Run a yfinance-bound callable in a thread with retry on 429 responses.
+
+    The underlying exceptions can be requests/urllib errors; detect 429 by
+    inspecting the exception text and retry with exponential backoff.
+    """
+    last_exc: Exception | None = None
+    for attempt in range(retries):
+        try:
+            return await asyncio.to_thread(func)
+        except Exception as exc:  # pragma: no cover - network dependent
+            last_exc = exc
+            msg = str(exc).lower()
+            if "429" in msg or "too many requests" in msg:
+                delay = base_delay * (2 ** attempt)
+                logger.warning("yfinance 429 received, retrying in %ss (attempt %s/%s)", delay, attempt + 1, retries)
+                await asyncio.sleep(delay)
+                continue
+            raise
+    if last_exc:
+        raise last_exc
+
+
 def _normalize_symbol(symbol: str, exchange: str) -> str:
     if exchange.upper() == "NSE" and not symbol.endswith(".NS"):
         return f"{symbol}.NS"
@@ -40,8 +63,8 @@ class YFinanceAdapter:
         try:
             await rate_limiter.acquire("yfinance")
             ticker = await asyncio.to_thread(yf.Ticker, normalized)
-            fast_info = await asyncio.to_thread(lambda: ticker.fast_info or {})
-            history = await asyncio.to_thread(lambda: ticker.history(period="5d", interval="1d"))
+            fast_info = await _yf_call_with_retries(lambda: ticker.fast_info or {})
+            history = await _yf_call_with_retries(lambda: ticker.history(period="5d", interval="1d"))
 
             last_price = float(fast_info.get("lastPrice") or 0.0)
             previous_close = float(fast_info.get("previousClose") or 0.0)
@@ -83,7 +106,7 @@ class YFinanceAdapter:
         try:
             await rate_limiter.acquire("yfinance")
             ticker = await asyncio.to_thread(yf.Ticker, normalized)
-            history = await asyncio.to_thread(lambda: ticker.history(period=period, interval=interval))
+            history = await _yf_call_with_retries(lambda: ticker.history(period=period, interval=interval))
             if history.empty:
                 return []
             records: list[dict[str, Any]] = []
@@ -109,7 +132,7 @@ class YFinanceAdapter:
         try:
             await rate_limiter.acquire("yfinance")
             ticker = await asyncio.to_thread(yf.Ticker, normalized)
-            info = await asyncio.to_thread(lambda: ticker.info or {})
+            info = await _yf_call_with_retries(lambda: ticker.info or {})
             return {
                 "pe": _float_or_none(info.get("trailingPE")),
                 "pb": _float_or_none(info.get("priceToBook")),
@@ -133,18 +156,18 @@ class YFinanceAdapter:
         try:
             await rate_limiter.acquire("yfinance")
             ticker = await asyncio.to_thread(yf.Ticker, normalized)
-            
-            # Fetch underlying price for accurate max-pain calculations
-            fast_info = await asyncio.to_thread(lambda: ticker.fast_info or {})
+
+            # Fetch underlying price for accurate max-pain calculations (with retries)
+            fast_info = await _yf_call_with_retries(lambda: ticker.fast_info or {})
             underlying_price = float(fast_info.get("lastPrice") or 0.0)
 
-            expiries = await asyncio.to_thread(lambda: ticker.options)
+            expiries = await _yf_call_with_retries(lambda: ticker.options)
             if not expiries:
                 return {"symbol": symbol, "expiry_dates": [], "rows": [], "underlying_price": underlying_price, "source": "yfinance", "is_synthetic": False, "timestamp": datetime.now(timezone.utc)}
 
             # Fetch the nearest expiry chain
             nearest_expiry = expiries[0]
-            chain = await asyncio.to_thread(ticker.option_chain, nearest_expiry)
+            chain = await _yf_call_with_retries(lambda: ticker.option_chain(nearest_expiry))
             
             calls = chain.calls
             puts = chain.puts

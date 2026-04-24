@@ -25,6 +25,7 @@ from app.ai.services.persistence_service import AIPersistenceService
 from app.ai.tool_registry import AIToolContext
 from app.core.config import get_settings
 from app.models.ai_entities import AIAnalysisJob, AIWatchlistSetting
+from app.core.database import async_session_factory
 
 
 class AIWatchlistOrchestrator:
@@ -168,120 +169,125 @@ class AIWatchlistOrchestrator:
         semaphore: asyncio.Semaphore,
     ) -> dict[str, Any]:
         async with semaphore:
-            latest_analysis = await self.persistence.get_latest_analysis(setting.watchlist_id, symbol)
-            if not force and latest_analysis and latest_analysis.created_at:
-                if not await self.data_access.has_material_update(symbol, latest_analysis.created_at):
-                    return {"symbol": symbol, "status": "skipped"}
+            # Use a dedicated DB session for each symbol to avoid concurrent AsyncSession use
+            async with async_session_factory() as local_session:
+                local_persistence = AIPersistenceService(local_session)
+                local_data_access = AIDataAccessService(local_session)
 
-            snapshot = await self.data_access.get_stock_snapshot(symbol)
-            if snapshot is None:
-                return {"symbol": symbol, "status": "failed"}
+                latest_analysis = await local_persistence.get_latest_analysis(setting.watchlist_id, symbol)
+                if not force and latest_analysis and latest_analysis.created_at:
+                    if not await local_data_access.has_material_update(symbol, latest_analysis.created_at):
+                        return {"symbol": symbol, "status": "skipped"}
 
-            categories = set(normalize_categories(_json_list(setting.categories_json)))
-            outputs: list[SpecialistOutput] = []
-            run_metadata: dict[str, Any] = {}
-            for agent in build_stock_agents():
-                if agent.category not in categories:
-                    continue
-                run = await self.persistence.create_agent_run(
-                    job_id=job_id,
+                snapshot = await local_data_access.get_stock_snapshot(symbol)
+                if snapshot is None:
+                    return {"symbol": symbol, "status": "failed"}
+
+                categories = set(normalize_categories(_json_list(setting.categories_json)))
+                outputs: list[SpecialistOutput] = []
+                run_metadata: dict[str, Any] = {}
+                for agent in build_stock_agents():
+                    if agent.category not in categories:
+                        continue
+                    run = await local_persistence.create_agent_run(
+                        job_id=job_id,
+                        watchlist_id=setting.watchlist_id,
+                        symbol=symbol,
+                        agent_name=agent.name,
+                        model_name=resolved_provider.specialist_model,
+                        prompt_version=get_prompt(agent.prompt_name).version,
+                    )
+                    try:
+                        output = await agent.analyze(
+                            AgentExecutionContext(
+                                watchlist_id=setting.watchlist_id,
+                                watchlist_name=watchlist_name,
+                                symbol=symbol,
+                                provider=provider,
+                                model_name=resolved_provider.specialist_model,
+                                tool_context=AIToolContext(
+                                    watchlist_id=setting.watchlist_id,
+                                    symbol=symbol,
+                                    data_access=local_data_access,
+                                    persistence=local_persistence,
+                                    job_id=job_id,
+                                    allow_write_tools=False,
+                                ),
+                                stock_snapshot=snapshot,
+                            )
+                        )
+                        outputs.append(output)
+                        run_metadata[agent.name] = output.model_metadata
+                        await local_persistence.complete_agent_run(
+                            run.id,
+                            status="completed",
+                            output=output.model_dump(mode="json"),
+                            confidence_score=output.confidence_score,
+                            importance_score=output.importance_score,
+                            raw_score=output.raw_score,
+                            tokens_input=_safe_int(output.model_metadata.get("input_tokens")),
+                            tokens_output=_safe_int(output.model_metadata.get("output_tokens")),
+                        )
+                    except Exception as exc:
+                        await local_persistence.complete_agent_run(run.id, status="failed", error_message=str(exc))
+                        await local_persistence.append_audit_log(
+                            watchlist_id=setting.watchlist_id,
+                            job_id=job_id,
+                            agent_name=agent.name,
+                            event_type="agent_failed",
+                            message=f"{agent.name} failed for {symbol}.",
+                            log_level="warning",
+                            safe_payload={"error": str(exc)[:300]},
+                        )
+
+                if not outputs:
+                    return {"symbol": symbol, "status": "failed"}
+
+                aggregated = await self._aggregate_outputs(
                     watchlist_id=setting.watchlist_id,
                     symbol=symbol,
-                    agent_name=agent.name,
-                    model_name=resolved_provider.specialist_model,
-                    prompt_version=get_prompt(agent.prompt_name).version,
+                    outputs=outputs,
+                    provider=provider,
+                    model_name=resolved_provider.orchestrator_model,
+                    run_metadata=run_metadata,
                 )
-                try:
-                    output = await agent.analyze(
-                        AgentExecutionContext(
-                            watchlist_id=setting.watchlist_id,
-                            watchlist_name=watchlist_name,
-                            symbol=symbol,
-                            provider=provider,
-                            model_name=resolved_provider.specialist_model,
-                            tool_context=AIToolContext(
-                                watchlist_id=setting.watchlist_id,
-                                symbol=symbol,
-                                data_access=self.data_access,
-                                persistence=self.persistence,
-                                job_id=job_id,
-                                allow_write_tools=False,
-                            ),
-                            stock_snapshot=snapshot,
-                        )
-                    )
-                    outputs.append(output)
-                    run_metadata[agent.name] = output.model_metadata
-                    await self.persistence.complete_agent_run(
-                        run.id,
-                        status="completed",
-                        output=output.model_dump(mode="json"),
-                        confidence_score=output.confidence_score,
-                        importance_score=output.importance_score,
-                        raw_score=output.raw_score,
-                        tokens_input=_safe_int(output.model_metadata.get("input_tokens")),
-                        tokens_output=_safe_int(output.model_metadata.get("output_tokens")),
-                    )
-                except Exception as exc:
-                    await self.persistence.complete_agent_run(run.id, status="failed", error_message=str(exc))
-                    await self.persistence.append_audit_log(
-                        watchlist_id=setting.watchlist_id,
-                        job_id=job_id,
-                        agent_name=agent.name,
-                        event_type="agent_failed",
-                        message=f"{agent.name} failed for {symbol}.",
-                        log_level="warning",
-                        safe_payload={"error": str(exc)[:300]},
-                    )
-
-            if not outputs:
-                return {"symbol": symbol, "status": "failed"}
-
-            aggregated = await self._aggregate_outputs(
-                watchlist_id=setting.watchlist_id,
-                symbol=symbol,
-                outputs=outputs,
-                provider=provider,
-                model_name=resolved_provider.orchestrator_model,
-                run_metadata=run_metadata,
-            )
-            analysis = await self.persistence.save_stock_analysis(
-                watchlist_id=setting.watchlist_id,
-                symbol=symbol,
-                job_id=job_id,
-                overall_signal=aggregated.overall_signal,
-                overall_score=aggregated.overall_score,
-                confidence_score=aggregated.confidence_score,
-                executive_summary=aggregated.executive_summary,
-                thesis_bull=aggregated.thesis_bull,
-                thesis_bear=aggregated.thesis_bear,
-                near_term_risks=aggregated.near_term_risks,
-                medium_term_risks=aggregated.medium_term_risks,
-                catalysts=aggregated.catalysts,
-                regulation_impact=aggregated.regulation_impact,
-                geo_political_impact=aggregated.geo_political_impact,
-                financial_health_summary=aggregated.financial_health_summary,
-                technical_summary=aggregated.technical_summary,
-                event_summary=aggregated.event_summary,
-                options_summary=aggregated.options_summary,
-                source_health_summary=aggregated.source_health_summary,
-                stale_data_flags=aggregated.stale_data_flags,
-                citations=[item.model_dump(mode="json") for item in aggregated.citations],
-                model_metadata=aggregated.model_metadata,
-                agent_run_metadata=aggregated.agent_run_metadata,
-                expires_at=datetime.now(UTC) + timedelta(minutes=setting.stale_after_minutes),
-                factors=[item.model_dump(mode="json") for item in aggregated.factors],
-                source_refs=[item.model_dump(mode="json") for item in aggregated.source_refs],
-            )
-            await self.persistence.append_audit_log(
-                watchlist_id=setting.watchlist_id,
-                job_id=job_id,
-                analysis_id=analysis.id,
-                event_type="analysis_saved",
-                message=f"Saved AI analysis for {symbol}.",
-                safe_payload={"overall_signal": aggregated.overall_signal, "overall_score": aggregated.overall_score},
-            )
-            return {"symbol": symbol, "status": "completed", "analysis_id": analysis.id}
+                analysis = await local_persistence.save_stock_analysis(
+                    watchlist_id=setting.watchlist_id,
+                    symbol=symbol,
+                    job_id=job_id,
+                    overall_signal=aggregated.overall_signal,
+                    overall_score=aggregated.overall_score,
+                    confidence_score=aggregated.confidence_score,
+                    executive_summary=aggregated.executive_summary,
+                    thesis_bull=aggregated.thesis_bull,
+                    thesis_bear=aggregated.thesis_bear,
+                    near_term_risks=aggregated.near_term_risks,
+                    medium_term_risks=aggregated.medium_term_risks,
+                    catalysts=aggregated.catalysts,
+                    regulation_impact=aggregated.regulation_impact,
+                    geo_political_impact=aggregated.geo_political_impact,
+                    financial_health_summary=aggregated.financial_health_summary,
+                    technical_summary=aggregated.technical_summary,
+                    event_summary=aggregated.event_summary,
+                    options_summary=aggregated.options_summary,
+                    source_health_summary=aggregated.source_health_summary,
+                    stale_data_flags=aggregated.stale_data_flags,
+                    citations=[item.model_dump(mode="json") for item in aggregated.citations],
+                    model_metadata=aggregated.model_metadata,
+                    agent_run_metadata=aggregated.agent_run_metadata,
+                    expires_at=datetime.now(UTC) + timedelta(minutes=setting.stale_after_minutes),
+                    factors=[item.model_dump(mode="json") for item in aggregated.factors],
+                    source_refs=[item.model_dump(mode="json") for item in aggregated.source_refs],
+                )
+                await local_persistence.append_audit_log(
+                    watchlist_id=setting.watchlist_id,
+                    job_id=job_id,
+                    analysis_id=analysis.id,
+                    event_type="analysis_saved",
+                    message=f"Saved AI analysis for {symbol}.",
+                    safe_payload={"overall_signal": aggregated.overall_signal, "overall_score": aggregated.overall_score},
+                )
+                return {"symbol": symbol, "status": "completed", "analysis_id": analysis.id}
 
     async def _aggregate_outputs(
         self,
