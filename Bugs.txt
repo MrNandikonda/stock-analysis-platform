@@ -44,3 +44,84 @@ Bugs and Improvements List for Stock Analysis Platform
 --------------------------------------------------------------------------------
 - [FIXED] Cause: SQLite write contention under high load.
 - [FIXED] Fix: Ensured SQLite PRAGMAs (WAL, NORMAL, busy_timeout) are correctly configured in `database.py`.
+
+--------------------------------------------------------------------------------
+AUDIT (2026-04-22): Repo-wide automated specialist audits
+--------------------------------------------------------------------------------
+Summary: Conducted coordinated audits using backend, frontend, market-data, quant/risk, and QA/security agents. Findings are categorized below by area with recommended fixes. Priority: address high/major items first (scheduler/DB/adapter robustness, rate-limiting, and adapter contracts).
+
+BACKEND (major/high priority)
+- AI-001: Remote provider aggregation exceptions swallowed (backend/app/ai/orchestrator.py)
+	- Symptom: bare except hides provider errors/timeouts.
+	- Fix: use `asyncio.wait_for`, catch TimeoutError/Exception, and `logger.exception` before fallback.
+
+- SERVICE-001: Long DB transactions during network I/O (backend/app/services/market_service.py)
+	- Symptom: network fetches hold AsyncSession for many upserts causing SQLITE_BUSY risk.
+	- Fix: fetch provider data first (batch/gather) and perform DB upserts in small batches with intermediate commits.
+
+- SCHED-001: AI watchlist scheduler lacks per-job timeout (backend/app/services/scheduler_service.py)
+	- Symptom: heavy AI jobs may hang or overload loop; no watchdog.
+	- Fix: wrap orchestrator calls with `asyncio.wait_for`, add per-job timeout and more conservative cadence.
+
+DATA / ADAPTERS (high/major)
+- MD-01: Adapter responses lack explicit source/is_synthetic metadata (backend/app/data_sources/*)
+	- Symptom: callers cannot distinguish synthetic fallbacks vs real provider data.
+	- Fix: standardize adapter envelope: include `source`, `is_synthetic`, `timestamp`, and optional `fallback_reason`.
+
+- MD-02 / MD-09 / MD-16: Per-row parse errors cause full synthetic fallback (nse_adapter.py) and adapters swallow exceptions without logging
+	- Symptom: a single malformed field ("-", commas, percent signs) triggers whole-chain synthetic response and hides root cause.
+	- Fix: implement robust per-field sanitizers, avoid global except->synthetic fallback, and `logger.warning/exception` on parse errors.
+
+- MD-10: Per-module RateLimiter instances lead to siloed buckets
+	- Symptom: each adapter creates its own limiter allowing global request abuse.
+	- Fix: centralize a shared rate limiter in `app.core.rate_limit` and import/inject it.
+
+API / INFRA / SECURITY (major/medium)
+- F005 / F006: In-memory per-process endpoint rate limiter is not distributed and not concurrency-safe (backend/app/main.py)
+	- Symptom: multi-process/proxied deployments may bypass limits; bucket updates race under concurrency.
+	- Fix: use a centralized store (Redis) for production-scale rate-limiting or reuse TokenBucket with asyncio.Lock; respect forwarded headers.
+
+- F010: CORS configured with credentials and wildcard headers; tighten origins for prod (backend/app/main.py)
+	- Symptom: risk of exposing credentials cross-origin if misconfigured.
+	- Fix: require explicit `CORS_ORIGINS` in production and avoid wildcards when `allow_credentials=True`.
+
+FRONTEND (major/medium)
+- F001 / F012: Options row typing mismatch and `any` usage in `ChartsPage.tsx` (frontend/src/lib/types.ts, ChartsPage.tsx)
+	- Symptom: UI expects `ce_ltp`/`pe_ltp` not present in types causing runtime fragility.
+	- Fix: add optional `ce_ltp?: number` / `pe_ltp?: number` to `OptionRow` and remove `any` casts.
+
+- F002: Symbol path not URL-encoded in API calls (frontend/src/lib/api.ts)
+	- Symptom: symbols with `^` or spaces cause 404/malformed requests.
+	- Fix: use `encodeURIComponent(symbol)` when building path parameters.
+
+- F004 / F005: Missing error handling and disabled actions during mutations across pages
+	- Symptom: backend failures show no UI feedback; duplicate submissions possible.
+	- Fix: add `onError` handling, `isError` checks, and disable buttons while mutations are pending.
+
+MARKET-DATA / FEATURES (medium)
+- MD-05: US options parser missing IV mapping (yfinance_adapter.py)
+	- Symptom: IV fields not mapped resulting in None for IV-based metrics.
+	- Fix: map provider IV fields to `ce_iv`/`pe_iv` or unified `iv` with clear `None` vs zero semantics.
+
+- MD-03 / MD-04: Inconsistent key names (`spot` vs `underlying_price`) and missing timestamps
+	- Symptom: MarketService must special-case adapters; freshness checks unavailable.
+	- Fix: normalize adapter output schema and include ISO8601 `timestamp`.
+
+QA / TESTS / DEPENDENCIES (medium/low)
+- F007: Missing tests for critical services (market_service, watchlist_service, portfolio_service, scheduler)
+	- Fix: add unit/integration tests, mock providers, and CI pytest job.
+
+- F012: Pin third-party dependencies and add vulnerability scans (pip-audit)
+	- Fix: pin versions and run `pip-audit` in CI.
+
+Next steps recommended (high priority):
+- 1) Fix adapter contract and logging (MD-01, MD-02, MD-09) so fallbacks are observable.
+- 2) Add per-job timeouts in scheduler and avoid long DB transactions during provider fetches (SERVICE-001, SCHED-001).
+- 3) Harden rate-limiter (backend/app/main.py) for concurrency and distributed deployments (F005/F006).
+
+Validation commands:
+- Backend compile & tests: `cd backend && python -m compileall app && python -m pytest -q`
+- Frontend build: `cd frontend && npm run build`
+- Apply migrations test: `DB_PATH=/tmp/stocks_migration_test.db python backend/migrations/run_migrations.py`
+
+End of audit summary. Contact me if you want me to open individual PRs for the top fixes.
