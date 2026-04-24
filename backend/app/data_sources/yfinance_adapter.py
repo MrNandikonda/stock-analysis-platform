@@ -123,7 +123,8 @@ class YFinanceAdapter:
                 "revenue_growth": _float_or_none(info.get("revenueGrowth")),
                 "eps": _float_or_none(info.get("trailingEps")),
             }
-        except Exception:
+        except Exception as exc:
+            logger.exception("yfinance get_fundamentals failed for %s (%s): %s", symbol, exchange, exc)
             return self._synthetic_fundamentals(symbol)
 
     @async_ttl_cache(ttl_seconds=300)
@@ -139,7 +140,7 @@ class YFinanceAdapter:
 
             expiries = await asyncio.to_thread(lambda: ticker.options)
             if not expiries:
-                return {"symbol": symbol, "expiry_dates": [], "rows": [], "underlying_price": underlying_price}
+                return {"symbol": symbol, "expiry_dates": [], "rows": [], "underlying_price": underlying_price, "source": "yfinance", "is_synthetic": False, "timestamp": datetime.now(timezone.utc)}
 
             # Fetch the nearest expiry chain
             nearest_expiry = expiries[0]
@@ -148,29 +149,34 @@ class YFinanceAdapter:
             calls = chain.calls
             puts = chain.puts
             
-            # Map calls and puts by strike price
-            strikes_data = {}
-            
+            # Map calls and puts by strike price with robust per-row parsing
+            strikes_data: dict[float, dict[str, Any]] = {}
+
             for _, row in calls.iterrows():
-                strike = float(row["strike"])
-                strikes_data[strike] = {
-                    "strike": strike,
-                    "ce_oi": int(row.get("openInterest") or 0),
-                    "ce_volume": int(row.get("volume") or 0),
-                    "ce_ltp": float(row.get("lastPrice") or 0.0),
-                    "pe_oi": 0,
-                    "pe_volume": 0,
-                    "pe_ltp": 0.0
-                }
-                
+                strike = _float_or_none(row.get("strike"))
+                if strike is None:
+                    logger.debug("skipping call row without numeric strike for %s: %s", symbol, row)
+                    continue
+                ce_oi = int(_float_or_none(row.get("openInterest")) or 0)
+                ce_vol = int(_float_or_none(row.get("volume")) or 0)
+                ce_ltp = float(_float_or_none(row.get("lastPrice")) or 0.0)
+                strikes_data.setdefault(strike, {"strike": strike, "ce_oi": 0, "ce_volume": 0, "ce_ltp": 0.0, "pe_oi": 0, "pe_volume": 0, "pe_ltp": 0.0})
+                strikes_data[strike]["ce_oi"] = ce_oi
+                strikes_data[strike]["ce_volume"] = ce_vol
+                strikes_data[strike]["ce_ltp"] = ce_ltp
+
             for _, row in puts.iterrows():
-                strike = float(row["strike"])
-                if strike not in strikes_data:
-                    strikes_data[strike] = {"strike": strike, "ce_oi": 0, "ce_volume": 0, "ce_ltp": 0.0}
-                
-                strikes_data[strike]["pe_oi"] = int(row.get("openInterest") or 0)
-                strikes_data[strike]["pe_volume"] = int(row.get("volume") or 0)
-                strikes_data[strike]["pe_ltp"] = float(row.get("lastPrice") or 0.0)
+                strike = _float_or_none(row.get("strike"))
+                if strike is None:
+                    logger.debug("skipping put row without numeric strike for %s: %s", symbol, row)
+                    continue
+                pe_oi = int(_float_or_none(row.get("openInterest")) or 0)
+                pe_vol = int(_float_or_none(row.get("volume")) or 0)
+                pe_ltp = float(_float_or_none(row.get("lastPrice")) or 0.0)
+                strikes_data.setdefault(strike, {"strike": strike, "ce_oi": 0, "ce_volume": 0, "ce_ltp": 0.0, "pe_oi": 0, "pe_volume": 0, "pe_ltp": 0.0})
+                strikes_data[strike]["pe_oi"] = pe_oi
+                strikes_data[strike]["pe_volume"] = pe_vol
+                strikes_data[strike]["pe_ltp"] = pe_ltp
 
             # Sort rows ascending by strike
             rows = [strikes_data[s] for s in sorted(strikes_data.keys())]
@@ -180,11 +186,14 @@ class YFinanceAdapter:
                 "underlying_price": underlying_price,
                 "expiry_dates": list(expiries),
                 "current_expiry": nearest_expiry,
-                "rows": rows
+                "rows": rows,
+                "source": "yfinance",
+                "is_synthetic": False,
+                "timestamp": datetime.now(timezone.utc),
             }
         except Exception as exc:
-            logger.warning("yfinance options chain fetch failed for %s: %s", symbol, exc)
-            return {"symbol": symbol, "expiry_dates": [], "rows": [], "underlying_price": 0.0}
+            logger.exception("yfinance options chain fetch failed for %s: %s", symbol, exc)
+            return {"symbol": symbol, "expiry_dates": [], "rows": [], "underlying_price": 0.0, "source": "error", "is_synthetic": True, "timestamp": datetime.now(timezone.utc)}
 
     def _synthetic_quote(self, symbol: str, exchange: str) -> dict[str, Any]:
         rng = _stable_rng(symbol)
@@ -247,3 +256,12 @@ def _float_or_none(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _int_or_zero(value: Any) -> int:
+    try:
+        if value is None:
+            return 0
+        return int(float(value))
+    except (TypeError, ValueError):
+        return 0

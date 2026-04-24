@@ -160,6 +160,8 @@ export interface OptionRow {
   pe_iv: number;
   ce_volume: number;
   pe_volume: number;
+  ce_ltp?: number | null;
+  pe_ltp?: number | null;
 }
 
 export interface OptionsChain {

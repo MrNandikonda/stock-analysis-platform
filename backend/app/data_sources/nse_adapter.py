@@ -40,6 +40,7 @@ class NSEAdapter:
                 "volume": None,
                 "timestamp": datetime.now(tz=timezone.utc),
                 "source": "nse",
+                "is_synthetic": False,
             }
         except Exception as exc:
             logger.warning("nse quote fetch failed for %s: %s", symbol, exc)
@@ -51,6 +52,7 @@ class NSEAdapter:
                 "volume": None,
                 "timestamp": datetime.now(tz=timezone.utc),
                 "source": "error",
+                "is_synthetic": True,
             }
 
     @async_ttl_cache(ttl_seconds=60)
@@ -62,29 +64,45 @@ class NSEAdapter:
             raw_data = await asyncio.to_thread(nse_optionchain_scrapper, symbol)
             records = raw_data.get("records", {})
             rows = records.get("data", [])
-            parsed = []
+            parsed: list[dict] = []
             for row in rows:
                 ce = row.get("CE") or {}
                 pe = row.get("PE") or {}
+                strike = _as_float(row.get("strikePrice"))
+                if strike is None:
+                    logger.debug("skipping row without numeric strike for %s: %s", symbol, row)
+                    continue
+                ce_oi = _as_float(ce.get("openInterest")) or 0.0
+                pe_oi = _as_float(pe.get("openInterest")) or 0.0
+                ce_iv = _as_float(ce.get("impliedVolatility")) or 0.0
+                pe_iv = _as_float(pe.get("impliedVolatility")) or 0.0
+                ce_vol = _as_float(ce.get("totalTradedVolume")) or 0.0
+                pe_vol = _as_float(pe.get("totalTradedVolume")) or 0.0
                 parsed.append(
                     {
-                        "strike": row.get("strikePrice"),
-                        "ce_oi": float(ce.get("openInterest", 0.0)),
-                        "pe_oi": float(pe.get("openInterest", 0.0)),
-                        "ce_iv": float(ce.get("impliedVolatility", 0.0)),
-                        "pe_iv": float(pe.get("impliedVolatility", 0.0)),
-                        "ce_volume": float(ce.get("totalTradedVolume", 0.0)),
-                        "pe_volume": float(pe.get("totalTradedVolume", 0.0)),
+                        "strike": strike,
+                        "ce_oi": float(ce_oi),
+                        "pe_oi": float(pe_oi),
+                        "ce_iv": float(ce_iv),
+                        "pe_iv": float(pe_iv),
+                        "ce_volume": float(ce_vol),
+                        "pe_volume": float(pe_vol),
                     }
                 )
             return {
                 "symbol": symbol,
                 "timestamp": datetime.now(tz=timezone.utc),
-                "spot": float(records.get("underlyingValue", 0.0)),
+                "spot": float(records.get("underlyingValue", 0.0)) if records.get("underlyingValue") is not None else 0.0,
                 "rows": parsed,
+                "source": "nse",
+                "is_synthetic": False,
             }
-        except Exception:
-            return self._synthetic_options(symbol)
+        except Exception as exc:
+            logger.exception("nse options chain fetch failed for %s: %s", symbol, exc)
+            synthetic = self._synthetic_options(symbol)
+            synthetic["source"] = "synthetic"
+            synthetic["is_synthetic"] = True
+            return synthetic
 
     def calculate_pcr(self, chain: dict) -> float | None:
         rows = chain.get("rows", [])
@@ -150,6 +168,8 @@ class NSEAdapter:
             "timestamp": datetime.now(tz=timezone.utc),
             "spot": spot,
             "rows": rows,
+            "source": "synthetic",
+            "is_synthetic": True,
         }
 
 

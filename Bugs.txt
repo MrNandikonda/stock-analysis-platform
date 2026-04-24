@@ -125,3 +125,41 @@ Validation commands:
 - Apply migrations test: `DB_PATH=/tmp/stocks_migration_test.db python backend/migrations/run_migrations.py`
 
 End of audit summary. Contact me if you want me to open individual PRs for the top fixes.
+
+--------------------------------------------------------------------------------
+CHANGES (2026-04-23): implemented high-priority fixes
+--------------------------------------------------------------------------------
+- AI-001: Remote provider aggregation exceptions and timeouts handled
+	- [FIXED] File: `backend/app/ai/orchestrator.py`
+	- Added logging for per-symbol task exceptions and wrapped remote provider calls with a 60s `asyncio.wait_for` timeout. Remote failures are logged and heuristic fallback retained.
+
+- MD-02 / MD-09 / MD-16: Adapter parsing and observability improvements
+	- [PARTIAL FIX] Files: `backend/app/data_sources/yfinance_adapter.py`, `backend/app/data_sources/nse_adapter.py`
+	- Per-row numeric parsing hardened (robust _float/_int handling), parsing errors are logged, options payloads now include `source`, `is_synthetic`, and `timestamp` metadata. Synthetic fallbacks are explicit and logged.
+
+- SCHED-001: Scheduler AI job runtime bounded
+	- [FIXED] File: `backend/app/services/scheduler_service.py`
+	- AI watchlist orchestrator runs are now wrapped with a 600s timeout to prevent scheduler hangs; timeouts roll back the DB session and are logged.
+
+- FRONTEND: Symbol encoding and options typing
+	- [FIXED] Files: `frontend/src/lib/api.ts`, `frontend/src/lib/types.ts`
+	- API client now `encodeURIComponent`-encodes symbol and exchange path segments; `OptionRow` type includes optional `ce_ltp`/`pe_ltp` to match adapter outputs.
+
+Notes:
+- Backend code compiled successfully; `pytest` was not available in the execution environment (`No module named pytest`). Please run tests locally or in CI:
+
+	```bash
+	cd backend
+	python -m compileall app
+	python -m pytest -q
+	```
+
+- Frontend build and further test validation require a Node environment locally or CI:
+
+	```bash
+	cd frontend
+	npm ci
+	npm run build
+	```
+
+If you want, I can continue: open PRs for these changes, add unit tests for adapter parsing, centralize the rate-limiter, or implement additional audit items. Which should I do next?

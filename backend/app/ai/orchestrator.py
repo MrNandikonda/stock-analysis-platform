@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -34,6 +35,7 @@ class AIWatchlistOrchestrator:
         self.data_access = AIDataAccessService(session)
         self.config_service = AIConfigService(session)
         self.provider_registry = AIProviderRegistry()
+        self.logger = logging.getLogger(__name__)
 
     async def run_due_watchlists(self) -> list[dict[str, Any]]:
         now = datetime.now(UTC).replace(tzinfo=None)
@@ -124,6 +126,7 @@ class AIWatchlistOrchestrator:
 
         for result in results:
             if isinstance(result, Exception):
+                self.logger.exception("symbol processing task raised: %s", result)
                 failed += 1
                 continue
             if result.get("status") == "failed":
@@ -292,17 +295,21 @@ class AIWatchlistOrchestrator:
     ) -> AggregatedAnalysis:
         if provider.supports_remote_inference and provider.health_check().ready:
             try:
-                result = await provider.generate_structured_output(
-                    model_name=model_name,
-                    instructions=get_prompt("orchestrator").instructions,
-                    payload={
-                        "watchlist_id": watchlist_id,
-                        "symbol": symbol,
-                        "specialist_outputs": [item.model_dump(mode="json") for item in outputs],
-                    },
-                    output_model=AggregatedAnalysis,
-                    tools=[],
-                    reasoning_effort="medium",
+                # Bound remote provider runtime to avoid hanging the orchestrator
+                result = await asyncio.wait_for(
+                    provider.generate_structured_output(
+                        model_name=model_name,
+                        instructions=get_prompt("orchestrator").instructions,
+                        payload={
+                            "watchlist_id": watchlist_id,
+                            "symbol": symbol,
+                            "specialist_outputs": [item.model_dump(mode="json") for item in outputs],
+                        },
+                        output_model=AggregatedAnalysis,
+                        tools=[],
+                        reasoning_effort="medium",
+                    ),
+                    timeout=60,
                 )
                 aggregated = AggregatedAnalysis.model_validate(result.payload)
                 aggregated.model_metadata.update(
@@ -316,8 +323,19 @@ class AIWatchlistOrchestrator:
                     }
                 )
                 return aggregated
-            except Exception:
-                pass
+            except asyncio.TimeoutError:
+                self.logger.warning(
+                    "provider.generate_structured_output timed out for watchlist=%s symbol=%s",
+                    watchlist_id,
+                    symbol,
+                )
+            except Exception as exc:
+                self.logger.exception(
+                    "provider.generate_structured_output failed for watchlist=%s symbol=%s: %s",
+                    watchlist_id,
+                    symbol,
+                    exc,
+                )
         return self._heuristic_aggregate(watchlist_id=watchlist_id, symbol=symbol, outputs=outputs, run_metadata=run_metadata)
 
     def _heuristic_aggregate(

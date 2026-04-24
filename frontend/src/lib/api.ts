@@ -45,10 +45,10 @@ export const api = {
     request<{ updated: number }>(`/market/refresh?limit=${limit}&mode=${mode}`, { method: "POST" }),
   getPriceHistory: (symbol: string, period = "1y", interval = "1d") =>
     request<PriceHistoryItem[]>(
-      `/market/history/${symbol}?period=${encodeURIComponent(period)}&interval=${encodeURIComponent(interval)}`,
+      `/market/history/${encodeURIComponent(symbol)}?period=${encodeURIComponent(period)}&interval=${encodeURIComponent(interval)}`,
     ),
   getOptionsChain: (symbol: string, exchange: string) =>
-    request<OptionsChain>(`/market/options/${symbol}?exchange=${exchange}`),
+    request<OptionsChain>(`/market/options/${encodeURIComponent(symbol)}?exchange=${encodeURIComponent(exchange)}`),
   runScreener: (payload: ScreenerQueryPayload) =>
     request<QuotesResponse>("/screener/run", {
       method: "POST",

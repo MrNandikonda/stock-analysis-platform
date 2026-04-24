@@ -75,7 +75,13 @@ def create_scheduler(session_factory: async_sessionmaker) -> AsyncIOScheduler:
             return
         async with session_factory() as session:
             try:
-                results = await AIWatchlistOrchestrator(session).run_due_watchlists()
+                # Bound AI orchestrator runs to avoid runaway jobs
+                try:
+                    results = await asyncio.wait_for(AIWatchlistOrchestrator(session).run_due_watchlists(), timeout=600)
+                except asyncio.TimeoutError:
+                    await session.rollback()
+                    logger.warning("ai watchlist refresh timed out")
+                    return
                 await session.commit()
                 logger.info("ai watchlist jobs processed: %s", len(results))
             except Exception as exc:  # pragma: no cover
