@@ -119,10 +119,30 @@ export const ScreenerPage = () => {
           </Select>
           <Select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
             <option value="change_1d">change_1d</option>
+            <option value="change_5d">change_5d</option>
             <option value="change_1m">change_1m</option>
+            <option value="change_3m">change_3m</option>
+            <option value="change_1y">change_1y</option>
             <option value="volume_spike">volume_spike</option>
+            <option value="volume">volume</option>
             <option value="pe">pe</option>
+            <option value="pb">pb</option>
+            <option value="peg">peg</option>
+            <option value="ev_ebitda">ev_ebitda</option>
             <option value="roe">roe</option>
+            <option value="roce">roce</option>
+            <option value="debt_equity">debt_equity</option>
+            <option value="profit_margin">profit_margin</option>
+            <option value="revenue_growth">revenue_growth</option>
+            <option value="rsi_14">rsi_14</option>
+            <option value="macd">macd</option>
+            <option value="sma_50">sma_50</option>
+            <option value="sma_200">sma_200</option>
+            <option value="market_cap">market_cap</option>
+            <option value="pcr">pcr</option>
+            <option value="iv">iv</option>
+            <option value="proximity_52w_high">proximity_52w_high</option>
+            <option value="proximity_52w_low">proximity_52w_low</option>
             <option value="updated_at">updated_at</option>
           </Select>
           <Select value={sortOrder} onChange={(event) => setSortOrder(event.target.value as "asc" | "desc")}>

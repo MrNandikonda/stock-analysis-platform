@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
@@ -21,6 +21,8 @@ export const PortfolioPage = () => {
   const [avgPrice, setAvgPrice] = useState("2500");
   const [buyDate, setBuyDate] = useState(new Date().toISOString().slice(0, 10));
   const [assetClass, setAssetClass] = useState("equity");
+  const [csvImport, setCsvImport] = useState("");
+  const [showCsvImport, setShowCsvImport] = useState(false);
 
   const holdingsQuery = useQuery({
     queryKey: ["portfolio"],
@@ -30,10 +32,33 @@ export const PortfolioPage = () => {
     queryKey: ["portfolio-summary"],
     queryFn: api.getPortfolioSummary,
   });
+  const historyQuery = useQuery({
+    queryKey: ["portfolio-history"],
+    queryFn: () => api.getPortfolioHistory(90),
+    staleTime: 300_000,
+  });
 
   const addHoldingMutation = useMutation({
     mutationFn: api.addPortfolioHolding,
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["portfolio"] });
+      void queryClient.invalidateQueries({ queryKey: ["portfolio-summary"] });
+    },
+  });
+
+  const deleteHoldingMutation = useMutation({
+    mutationFn: api.deletePortfolioHolding,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["portfolio"] });
+      void queryClient.invalidateQueries({ queryKey: ["portfolio-summary"] });
+    },
+  });
+
+  const importCsvMutation = useMutation({
+    mutationFn: api.importPortfolioCsv,
+    onSuccess: () => {
+      setCsvImport("");
+      setShowCsvImport(false);
       void queryClient.invalidateQueries({ queryKey: ["portfolio"] });
       void queryClient.invalidateQueries({ queryKey: ["portfolio-summary"] });
     },
@@ -79,6 +104,36 @@ export const PortfolioPage = () => {
         <StatCard label="XIRR" value={`${formatNumber((summaryQuery.data?.xirr ?? 0) * 100, 2)}%`} />
       </section>
 
+      {historyQuery.data && historyQuery.data.length > 1 && (
+        <Card className="panel-elevated space-y-3">
+          <h3 className="font-display text-base text-white">Portfolio Equity Curve</h3>
+          <p className="muted text-xs">Historical portfolio value vs. invested capital over the last 90 days.</p>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={historyQuery.data} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
+              <defs>
+                <linearGradient id="valueGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="investedGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#27c48f" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#27c48f" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#94a3b8" }} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
+              <Tooltip
+                contentStyle={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }}
+                labelStyle={{ color: "#e2e8f0" }}
+              />
+              <Area type="monotone" dataKey="total_value" name="Value" stroke="#0ea5e9" fill="url(#valueGrad)" strokeWidth={2} dot={false} />
+              <Area type="monotone" dataKey="total_invested" name="Invested" stroke="#27c48f" fill="url(#investedGrad)" strokeWidth={1.5} strokeDasharray="4 2" dot={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </Card>
+      )}
+
       <section className="grid gap-5 lg:grid-cols-[1fr_1.2fr]">
         <Card className="panel-elevated space-y-3">
           <h3 className="font-display text-lg text-white">Add Holding</h3>
@@ -93,6 +148,7 @@ export const PortfolioPage = () => {
             <option value="cash">Cash</option>
           </Select>
           <Button
+            disabled={addHoldingMutation.isPending}
             onClick={() =>
               addHoldingMutation.mutate({
                 symbol,
@@ -103,8 +159,43 @@ export const PortfolioPage = () => {
               })
             }
           >
-            Save Holding
+            {addHoldingMutation.isPending ? "Saving..." : "Save Holding"}
           </Button>
+          {addHoldingMutation.isError && (
+            <p className="text-xs text-red-400">{(addHoldingMutation.error as Error).message}</p>
+          )}
+          <div className="mt-1 border-t border-slate-700/40 pt-3">
+            <button
+              className="text-xs text-slate-400 hover:text-slate-200 transition"
+              onClick={() => setShowCsvImport((v) => !v)}
+            >
+              {showCsvImport ? "Hide CSV import ▲" : "Import CSV ▼"}
+            </button>
+            {showCsvImport && (
+              <div className="mt-2 space-y-2">
+                <p className="text-[11px] text-slate-400">Columns: symbol, quantity, avg_price, buy_date, asset_class</p>
+                <textarea
+                  value={csvImport}
+                  onChange={(e) => setCsvImport(e.target.value)}
+                  className="h-28 w-full rounded-lg border border-slate-500/40 bg-slate-900/60 p-2 text-xs text-slate-200"
+                  placeholder={"symbol,quantity,avg_price,buy_date,asset_class\nAAPL,10,175.00,2024-01-15,equity"}
+                />
+                <Button
+                  variant="outline"
+                  disabled={importCsvMutation.isPending || !csvImport.trim()}
+                  onClick={() => importCsvMutation.mutate(csvImport)}
+                >
+                  {importCsvMutation.isPending ? "Importing..." : "Import CSV"}
+                </Button>
+                {importCsvMutation.isError && (
+                  <p className="text-xs text-red-400">{(importCsvMutation.error as Error).message}</p>
+                )}
+                {importCsvMutation.isSuccess && (
+                  <p className="text-xs text-green-400">Import complete.</p>
+                )}
+              </div>
+            )}
+          </div>
         </Card>
 
         <div className="grid gap-5 sm:grid-cols-2">
@@ -153,6 +244,7 @@ export const PortfolioPage = () => {
                 <th className="px-3 py-2">Market Value</th>
                 <th className="px-3 py-2">P&L</th>
                 <th className="px-3 py-2">XIRR</th>
+                <th className="px-3 py-2"></th>
               </tr>
             </thead>
             <tbody>
@@ -167,6 +259,15 @@ export const PortfolioPage = () => {
                     {formatNumber(holding.unrealized_pnl, 2)}
                   </td>
                   <td className="px-3 py-2 text-slate-300">{formatNumber(holding.xirr * 100, 2)}%</td>
+                  <td className="px-3 py-2">
+                    <button
+                      className="text-xs text-red-400 hover:text-red-300 transition disabled:opacity-40"
+                      disabled={deleteHoldingMutation.isPending}
+                      onClick={() => deleteHoldingMutation.mutate(holding.id)}
+                    >
+                      Remove
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

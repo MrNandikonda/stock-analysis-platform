@@ -24,6 +24,15 @@ async def create_watchlist(payload: CreateWatchlistRequest, session: AsyncSessio
     return result
 
 
+@router.delete("/{watchlist_id}")
+async def delete_watchlist(watchlist_id: int, session: AsyncSession = Depends(get_db_session)) -> dict:
+    deleted = await WatchlistService(session).delete_watchlist(watchlist_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Watchlist not found")
+    await session.commit()
+    return {"deleted": True}
+
+
 @router.post("/{watchlist_id}/items")
 async def add_items(
     watchlist_id: int,

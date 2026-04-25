@@ -1,4 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ActivitySquare,
   ArrowLeftRight,
@@ -10,6 +12,7 @@ import {
   ListFilter,
   Menu,
   Newspaper,
+  Search,
   ShieldCheck,
   Sparkles,
   Wallet,
@@ -18,6 +21,8 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/StatusPill";
+import { api } from "@/lib/api";
+import type { SearchResult } from "@/lib/types";
 import { useAppStore } from "@/store/useAppStore";
 
 export type AppTab = "dashboard" | "screener" | "charts" | "watchlists" | "portfolio" | "news" | "diagnostics";
@@ -39,8 +44,59 @@ type AppShellProps = {
 };
 
 export const AppShell = ({ activeTab, onTabChange, children }: AppShellProps) => {
-  const { market, setMarket, currency, setCurrency } = useAppStore();
+  const { market, setMarket, currency, setCurrency, setSelectedSymbol } = useAppStore();
   const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  const aiStatusQuery = useQuery({
+    queryKey: ["ai-status-header"],
+    queryFn: api.getAIStatus,
+    staleTime: 120_000,
+    refetchInterval: 120_000,
+  });
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setSearchOpen(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      api
+        .searchMarket(searchQuery)
+        .then((res) => {
+          setSearchResults(res.items.slice(0, 8));
+          setSearchOpen(res.items.length > 0);
+        })
+        .catch(() => {
+          setSearchResults([]);
+          setSearchOpen(false);
+        });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleSearchSelect = (result: SearchResult) => {
+    setSelectedSymbol(result.symbol);
+    onTabChange("charts");
+    setSearchQuery("");
+    setSearchResults([]);
+    setSearchOpen(false);
+  };
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -98,15 +154,34 @@ export const AppShell = ({ activeTab, onTabChange, children }: AppShellProps) =>
               <span className="font-semibold">RythuMarket</span>
             </div>
             <div className="hidden max-w-md flex-1 items-center gap-2 md:flex">
-              <div className="relative w-full">
-                <Sparkles className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <div className="relative w-full" ref={searchRef}>
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                 <input
-                  placeholder="Search symbol, watchlist, news..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); }
+                  }}
+                  placeholder="Search symbol..."
                   className="h-8 w-full rounded-md border border-border bg-input pl-8 pr-12 font-mono text-sm placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                 />
                 <kbd className="absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-border px-1 py-0.5 font-mono text-[10px] text-muted-foreground md:inline-flex">
                   Ctrl K
                 </kbd>
+                {searchOpen && searchResults.length > 0 && (
+                  <div className="absolute left-0 top-full z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-background shadow-lg">
+                    {searchResults.map((result) => (
+                      <button
+                        key={result.symbol}
+                        className="flex w-full items-center justify-between px-3 py-2 text-sm hover:bg-sidebar-accent/60"
+                        onClick={() => handleSearchSelect(result)}
+                      >
+                        <span className="font-mono font-semibold text-foreground">{result.symbol}</span>
+                        <span className="text-xs text-muted-foreground">{result.exchange} · {result.asset_type}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
@@ -129,7 +204,9 @@ export const AppShell = ({ activeTab, onTabChange, children }: AppShellProps) =>
               </Button>
               <div className="hidden items-center gap-2 xl:flex">
                 <StatusPill tone="ok" pulse icon={<Cloud className="h-3 w-3" />}>Tunnel</StatusPill>
-                <StatusPill tone="ai" icon={<Sparkles className="h-3 w-3" />}>AI Ready</StatusPill>
+                <StatusPill tone={aiStatusQuery.data?.ai_analysis_enabled ? "ai" : "warn"} icon={<Sparkles className="h-3 w-3" />}>
+                  {aiStatusQuery.data?.ai_analysis_enabled ? "AI Ready" : "AI Off"}
+                </StatusPill>
                 <StatusPill tone="info" icon={<Database className="h-3 w-3" />}>SQLite</StatusPill>
                 <StatusPill tone="info" icon={<Cpu className="h-3 w-3" />}>Self-hosted</StatusPill>
                 <StatusPill tone="warn" icon={<ShieldCheck className="h-3 w-3" />}>Safety</StatusPill>

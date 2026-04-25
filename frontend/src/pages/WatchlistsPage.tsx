@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BellPlus, BrainCircuit, FileUp, Play, PlusCircle, Save } from "lucide-react";
+import { BellPlus, BrainCircuit, FileUp, Play, PlusCircle, Save, Trash2, X } from "lucide-react";
 
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
@@ -157,6 +157,24 @@ export const WatchlistsPage = () => {
     },
   });
 
+  const removeItemMutation = useMutation({
+    mutationFn: ({ watchlistId, symbol }: { watchlistId: number; symbol: string }) =>
+      api.removeWatchlistItem(watchlistId, symbol),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["watchlists"] });
+      void queryClient.invalidateQueries({ queryKey: ["ai-watchlist-summary", selectedWatchlistId] });
+    },
+  });
+
+  const deleteWatchlistMutation = useMutation({
+    mutationFn: api.deleteWatchlist,
+    onSuccess: () => {
+      setSelectedWatchlistId(null);
+      setSelectedAnalysisSymbol(null);
+      void queryClient.invalidateQueries({ queryKey: ["watchlists"] });
+    },
+  });
+
   const bullishFactors = analysisDetailQuery.data?.analysis.factors.filter((item) => item.factor_type === "bullish") ?? [];
   const bearishFactors = analysisDetailQuery.data?.analysis.factors.filter((item) => item.factor_type === "bearish") ?? [];
   const neutralFactors = analysisDetailQuery.data?.analysis.factors.filter((item) => item.factor_type === "neutral") ?? [];
@@ -183,6 +201,19 @@ export const WatchlistsPage = () => {
           <h2 className="font-display text-lg text-white">Watchlists</h2>
           <Badge>{watchlistsQuery.data?.length ?? 0}</Badge>
         </div>
+        {selectedWatchlist && (
+          <button
+            className="flex w-full items-center gap-2 rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-1.5 text-xs text-red-400 transition hover:bg-red-500/20 disabled:opacity-40"
+            disabled={deleteWatchlistMutation.isPending}
+            onClick={() => {
+              if (!window.confirm(`Delete watchlist "${selectedWatchlist.name}"? This cannot be undone.`)) return;
+              deleteWatchlistMutation.mutate(selectedWatchlist.id);
+            }}
+          >
+            <Trash2 size={12} />
+            Delete "{selectedWatchlist.name}"
+          </button>
+        )}
         <div className="flex gap-2">
           <Input value={newWatchlistName} onChange={(event) => setNewWatchlistName(event.target.value)} placeholder="New watchlist name" />
           <Button
@@ -255,14 +286,38 @@ export const WatchlistsPage = () => {
             placeholder="Comma-separated symbols"
           />
           <Button
+            disabled={addItemsMutation.isPending}
             onClick={() => {
               if (!selectedWatchlistId || !symbolsInput.trim()) return;
               const symbols = symbolsInput.split(",").map((symbol) => symbol.trim()).filter(Boolean);
               addItemsMutation.mutate({ watchlistId: selectedWatchlistId, symbols });
             }}
           >
-            Add Symbols
+            {addItemsMutation.isPending ? "Adding..." : "Add Symbols"}
           </Button>
+
+          {selectedWatchlist && selectedWatchlist.items.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-xs uppercase tracking-wide text-slate-400">Current symbols</p>
+              <div className="flex flex-wrap gap-1.5">
+                {selectedWatchlist.items.map((item) => (
+                  <span
+                    key={item.symbol}
+                    className="flex items-center gap-1 rounded-full border border-slate-500/30 bg-slate-800/60 px-2 py-0.5 text-xs text-slate-200"
+                  >
+                    {item.symbol}
+                    <button
+                      className="ml-0.5 text-slate-400 hover:text-red-400 transition disabled:opacity-40"
+                      disabled={removeItemMutation.isPending}
+                      onClick={() => removeItemMutation.mutate({ watchlistId: selectedWatchlist.id, symbol: item.symbol })}
+                    >
+                      <X size={10} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           <textarea
             value={csvText}

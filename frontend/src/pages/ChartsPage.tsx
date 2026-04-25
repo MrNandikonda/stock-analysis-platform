@@ -61,7 +61,11 @@ export const ChartsPage = () => {
       />
 
       <Card className="panel-elevated grid gap-3 sm:grid-cols-4">
-        <Input value={symbolInput} onChange={(event) => setSymbolInput(event.target.value.toUpperCase())} />
+        <Input
+          value={symbolInput}
+          onChange={(event) => setSymbolInput(event.target.value.toUpperCase())}
+          onKeyDown={(event) => { if (event.key === "Enter") onApplySymbol(); }}
+        />
         <Select value={exchange} onChange={(event) => setExchange(event.target.value)}>
           <option value="NSE">NSE</option>
           <option value="US">US</option>

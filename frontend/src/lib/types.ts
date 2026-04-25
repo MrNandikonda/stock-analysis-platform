@@ -343,6 +343,20 @@ export interface AIJobSummary {
   finished_at?: string | null;
 }
 
+export interface PortfolioHistoryPoint {
+  date: string;
+  total_value: number;
+  total_invested: number;
+  unrealized_pnl: number;
+}
+
+export interface SearchResult {
+  symbol: string;
+  name: string;
+  exchange: string;
+  asset_type: string;
+}
+
 export interface AIDiagnosticsResponse {
   providers: AIProviderStatus[];
   recent_jobs: AIJobSummary[];

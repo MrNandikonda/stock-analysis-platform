@@ -70,6 +70,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ symbols }),
     }),
+  removeWatchlistItem: (watchlistId: number, symbol: string) =>
+    request(`/watchlists/${watchlistId}/items/${encodeURIComponent(symbol)}`, { method: "DELETE" }),
+  deleteWatchlist: (watchlistId: number) =>
+    request(`/watchlists/${watchlistId}`, { method: "DELETE" }),
   importWatchlistCsv: (watchlistId: number, csvData: string) =>
     request(`/watchlists/${watchlistId}/import-csv`, {
       method: "POST",
@@ -91,10 +95,15 @@ export const api = {
     asset_class: string;
   }) =>
     request("/portfolio", { method: "POST", body: JSON.stringify(payload) }),
+  deletePortfolioHolding: (holdingId: number) =>
+    request(`/portfolio/${holdingId}`, { method: "DELETE" }),
+  getPortfolioHistory: (days = 90) => request<import("@/lib/types").PortfolioHistoryPoint[]>(`/portfolio/history?days=${days}`),
   importPortfolioCsv: (csvData: string) =>
     request("/portfolio/import-csv", { method: "POST", body: JSON.stringify({ csv_data: csvData }) }),
   getNews: (symbols?: string, limit = 30) =>
     request<NewsItem[]>(`/news?limit=${limit}${symbols ? `&symbols=${encodeURIComponent(symbols)}` : ""}`),
+  searchMarket: (q: string) =>
+    request<{ items: import("@/lib/types").SearchResult[] }>(`/market/search?q=${encodeURIComponent(q)}`),
   getEarningsCalendar: (symbols?: string) =>
     request<EarningsEvent[]>(`/news/earnings-calendar${symbols ? `?symbols=${encodeURIComponent(symbols)}` : ""}`),
   getAIStatus: () => request<AIStatusResponse>("/ai/status"),

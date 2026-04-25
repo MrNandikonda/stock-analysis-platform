@@ -63,6 +63,25 @@ class WatchlistService:
         await self.session.flush()
         return {"id": watchlist.id, "name": watchlist.name, "created_at": watchlist.created_at.isoformat()}
 
+    async def delete_watchlist(self, watchlist_id: int) -> bool:
+        watchlist = (
+            await self.session.execute(
+                select(Watchlist).where(Watchlist.id == watchlist_id, Watchlist.user_id == "local")
+            )
+        ).scalar_one_or_none()
+        if not watchlist:
+            return False
+        # Cascade delete items
+        items = (
+            await self.session.execute(
+                select(WatchlistItem).where(WatchlistItem.watchlist_id == watchlist_id)
+            )
+        ).scalars().all()
+        for item in items:
+            await self.session.delete(item)
+        await self.session.delete(watchlist)
+        return True
+
     async def add_items(self, watchlist_id: int, symbols: list[str]) -> int:
         cleaned_symbols = sorted({symbol.strip().upper() for symbol in symbols if symbol.strip()})
         market_service = MarketService(self.session)
