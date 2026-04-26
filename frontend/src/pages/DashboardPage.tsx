@@ -68,9 +68,9 @@ export const DashboardPage = () => {
   const activeAISummaries = summaries.filter((summary) => summary?.enabled).length;
 
   return (
-    <div className="space-y-5">
-      <Card className="hero-glow grid gap-5 overflow-hidden p-5 md:grid-cols-[1.45fr_0.85fr]">
-        <div className="relative">
+    <div className="space-y-6">
+      <div className="panel-elevated hero-glow grid gap-6 overflow-hidden p-6 md:p-8 md:grid-cols-[1.45fr_0.85fr]">
+        <div className="relative z-10">
           <Badge className="mb-4" tone="positive">
             Live public deployment
           </Badge>
@@ -87,21 +87,21 @@ export const DashboardPage = () => {
             <HeroStat label="AI watchlists" value={`${activeAISummaries}/${watchlistQuery.data?.length ?? 0}`} />
           </div>
         </div>
-        <div className="relative rounded-[1.35rem] border border-aqua/20 bg-slate-950/45 p-4">
-          <div className="mb-4 flex items-center gap-2 text-aqua">
+        <div className="relative z-10 rounded-[1.35rem] border border-white/10 bg-black/40 backdrop-blur-md p-5 shadow-2xl">
+          <div className="mb-5 flex items-center gap-2 text-aqua">
             <Radar size={18} />
             <span className="text-sm font-semibold">Signal radar</span>
           </div>
           <div className="space-y-3">
             {topMovers.slice(0, 4).map((item, index) => (
-              <div key={item.symbol} className="rounded-2xl border border-slate-300/10 bg-white/[0.03] p-3">
+              <div key={item.symbol} className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition hover:bg-white/[0.04]">
                 <div className="flex items-center justify-between">
-                  <span className="font-display text-lg text-white">{item.symbol}</span>
-                  <span className={(item.change_1d ?? 0) >= 0 ? "positive" : "negative"}>
+                  <span className="font-display text-xl text-white tracking-wide">{item.symbol}</span>
+                  <span className={(item.change_1d ?? 0) >= 0 ? "text-emerald-400 font-medium" : "text-rose-400 font-medium"}>
                     {formatNumber(item.change_1d, 2)}%
                   </span>
                 </div>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-800">
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-aqua to-amber-300"
                     style={{ width: `${Math.min(100, Math.max(12, 35 + Math.abs(item.change_1d ?? 0) * 8 + index * 5))}%` }}
@@ -111,7 +111,7 @@ export const DashboardPage = () => {
             ))}
           </div>
         </div>
-      </Card>
+      </div>
 
       <MarketStatusPanel status={statusQuery.data} />
 
@@ -154,7 +154,7 @@ export const DashboardPage = () => {
         </Card>
       )}
 
-      <Card className="space-y-4 hover:border-aqua/25">
+      <div className="panel space-y-4 p-5 hover:border-violet-500/30 transition-colors">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-display text-lg text-white">Unified Market Watch</h2>
@@ -165,12 +165,12 @@ export const DashboardPage = () => {
           </Button>
         </div>
         <QuotesTable rows={activeRows} onSymbolClick={setSelectedSymbol} />
-      </Card>
+      </div>
 
-      <Card className="space-y-4 hover:border-aqua/25">
+      <div className="panel space-y-4 p-5 hover:border-violet-500/30 transition-colors">
         <div>
-          <h2 className="flex items-center gap-2 font-display text-lg text-white">
-            <BrainCircuit size={18} className="text-aqua" />
+          <h2 className="flex items-center gap-2 font-display text-xl text-white">
+            <BrainCircuit size={20} className="text-violet-400" />
             AI watchlist deck
           </h2>
           <p className="muted text-xs">Unified view for NSE and US symbols.</p>
@@ -215,7 +215,7 @@ export const DashboardPage = () => {
             </div>
           ))}
         </div>
-      </Card>
+      </div>
     </div>
   );
 };
@@ -231,20 +231,20 @@ const MetricCard = ({
   subtitle: string;
   icon: ReactElement;
 }) => (
-  <Card className="flex items-start justify-between hover:-translate-y-0.5 hover:border-aqua/25">
+  <div className="panel flex items-start justify-between p-5 hover:-translate-y-1">
     <div>
-      <p className="text-xs uppercase tracking-wide text-slate-300">{title}</p>
-      <p className="mt-1 font-display text-2xl text-white">{value}</p>
-      <p className="muted text-xs">{subtitle}</p>
+      <p className="text-xs uppercase tracking-widest text-slate-400 font-medium">{title}</p>
+      <p className="mt-2 font-display text-3xl font-semibold text-white tracking-tight">{value}</p>
+      <p className="muted text-xs mt-1">{subtitle}</p>
     </div>
-    <div className="rounded-2xl border border-aqua/15 bg-aqua/10 p-2 text-aqua">{icon}</div>
-  </Card>
+    <div className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-aqua shadow-inner">{icon}</div>
+  </div>
 );
 
 const HeroStat = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-2xl border border-slate-300/15 bg-slate-950/40 p-3">
-    <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">{label}</p>
-    <p className="mt-1 font-display text-xl text-white">{value}</p>
+  <div className="rounded-2xl border border-white/5 bg-white/5 backdrop-blur p-4 transition hover:bg-white/10">
+    <p className="text-[10px] uppercase tracking-[0.2em] font-medium text-slate-400">{label}</p>
+    <p className="mt-1.5 font-display text-2xl font-medium text-white">{value}</p>
   </div>
 );
 

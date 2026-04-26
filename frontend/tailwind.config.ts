@@ -11,10 +11,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
-        body: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
-        sans: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
-        mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
+        sans: ['"Inter"', "system-ui", "sans-serif"],
+        display: ['"Outfit"', "system-ui", "sans-serif"],
+        mono: ['"JetBrains Mono"', "ui-monospace", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -76,23 +75,28 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        slateDark: "#101923",
-        sunrise: "#ff6a3d",
-        mint: "#27c48f",
-        glacier: "#0ea5e9",
+        slateDark: "#050505",
+        aqua: "#00f0ff",
+        violet: "#8b5cf6",
+        fuchsia: "#d946ef",
+        rose: "#f43f5e",
+        emerald: "#10b981",
+        amber: "#f59e0b",
       },
       boxShadow: {
         amber: "var(--shadow-amber)",
         cyan: "var(--shadow-cyan)",
         panel: "var(--shadow-panel)",
+        "premium-glow": "0 0 40px -10px rgba(139, 92, 246, 0.4)",
+        "premium-card": "0 8px 32px 0 rgba(0, 0, 0, 0.3)",
       },
       backgroundImage: {
-        "mesh-gradient":
-          "radial-gradient(circle at 20% 20%, rgba(255,106,61,0.2), transparent 42%), radial-gradient(circle at 80% 0%, rgba(39,196,143,0.22), transparent 45%), radial-gradient(circle at 50% 90%, rgba(14,165,233,0.14), transparent 48%)",
+        "mesh-gradient": "radial-gradient(circle at 20% 20%, rgba(139,92,246,0.15), transparent 40%), radial-gradient(circle at 80% 0%, rgba(217,70,239,0.15), transparent 40%), radial-gradient(circle at 50% 90%, rgba(0,240,255,0.1), transparent 50%)",
         "gradient-amber": "var(--gradient-amber)",
         "gradient-cyan": "var(--gradient-cyan)",
         "gradient-ink": "var(--gradient-ink)",
         "gradient-glass": "var(--gradient-glass)",
+        "gradient-premium": "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)",
       },
       keyframes: {
         "pulse-dot": {
@@ -103,10 +107,20 @@ export default {
           "0%": { backgroundColor: "hsl(var(--primary) / 0.18)" },
           "100%": { backgroundColor: "transparent" },
         },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-5px)" },
+        },
+        "glow-pulse": {
+          "0%, 100%": { opacity: "0.8" },
+          "50%": { opacity: "1" },
+        }
       },
       animation: {
         "pulse-dot": "pulse-dot 1.6s ease-in-out infinite",
         "ticker-blip": "ticker-blip 600ms ease-out",
+        "float": "float 6s ease-in-out infinite",
+        "glow-pulse": "glow-pulse 4s ease-in-out infinite",
       },
     },
   },
