@@ -97,6 +97,7 @@ export const api = {
     request("/portfolio", { method: "POST", body: JSON.stringify(payload) }),
   deletePortfolioHolding: (holdingId: number) =>
     request(`/portfolio/${holdingId}`, { method: "DELETE" }),
+  getPortfolioHealth: () => request<any>("/portfolio/health"),
   getPortfolioHistory: (days = 90) => request<import("@/lib/types").PortfolioHistoryPoint[]>(`/portfolio/history?days=${days}`),
   importPortfolioCsv: (csvData: string) =>
     request("/portfolio/import-csv", { method: "POST", body: JSON.stringify({ csv_data: csvData }) }),

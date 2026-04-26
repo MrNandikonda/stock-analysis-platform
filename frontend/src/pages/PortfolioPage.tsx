@@ -37,6 +37,10 @@ export const PortfolioPage = () => {
     queryFn: () => api.getPortfolioHistory(90),
     staleTime: 300_000,
   });
+  const healthQuery = useQuery({
+    queryKey: ["portfolio-health"],
+    queryFn: api.getPortfolioHealth,
+  });
 
   const addHoldingMutation = useMutation({
     mutationFn: api.addPortfolioHolding,
@@ -274,6 +278,51 @@ export const PortfolioPage = () => {
           </table>
         </div>
       </Card>
+
+      {healthQuery.data && healthQuery.data.holdings && healthQuery.data.holdings.length > 0 && (
+        <Card className="panel-elevated space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-display text-lg text-white">Advanced Quant & Risk Analysis</h3>
+              <p className="muted text-xs">SPY Benchmark 1D Change: <span className={healthQuery.data.benchmark_1d >= 0 ? "positive font-medium" : "negative font-medium"}>{healthQuery.data.benchmark_1d}%</span></p>
+            </div>
+          </div>
+          <div className="overflow-auto">
+            <table className="min-w-full text-sm">
+              <thead className="text-left text-xs uppercase tracking-wide text-slate-300">
+                <tr>
+                  <th className="px-3 py-2">Symbol</th>
+                  <th className="px-3 py-2">Alpha vs SPY (1D)</th>
+                  <th className="px-3 py-2">52W Drawdown</th>
+                  <th className="px-3 py-2">Volatility (ATR)</th>
+                  <th className="px-3 py-2">RSI (14)</th>
+                  <th className="px-3 py-2">Technical Posture</th>
+                </tr>
+              </thead>
+              <tbody>
+                {healthQuery.data.holdings.map((h: any) => (
+                  <tr key={h.symbol} className="border-t border-slate-700/45">
+                    <td className="px-3 py-2 font-medium text-slate-100">{h.symbol}</td>
+                    <td className={`px-3 py-2 font-medium ${h.outperformance_vs_spy >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      {h.outperformance_vs_spy > 0 ? "+" : ""}{h.outperformance_vs_spy}%
+                    </td>
+                    <td className="px-3 py-2 text-rose-300">
+                      {(h.drawdown_52w_high < 0 ? h.drawdown_52w_high : 0)}%
+                    </td>
+                    <td className="px-3 py-2 text-slate-300">{h.volatility_atr}</td>
+                    <td className="px-3 py-2 text-slate-300">{h.rsi_14}</td>
+                    <td className="px-3 py-2">
+                      <span className={`rounded-full px-2 py-1 text-xs font-medium ${h.technical_posture.includes("Bullish") ? "bg-emerald-500/10 text-emerald-400" : h.technical_posture.includes("Bearish") ? "bg-rose-500/10 text-rose-400" : "bg-slate-500/10 text-slate-400"}`}>
+                        {h.technical_posture}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
     </div>
   );
 };

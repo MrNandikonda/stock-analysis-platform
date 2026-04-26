@@ -4,6 +4,7 @@ import { BellPlus, BrainCircuit, FileUp, Play, PlusCircle, Save, Trash2, X } fro
 
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
+import { PositionEntryModal } from "@/components/PositionEntryModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -47,6 +48,7 @@ export const WatchlistsPage = () => {
   const [alertTarget, setAlertTarget] = useState("0");
   const [csvText, setCsvText] = useState("symbol\nRELIANCE\nAAPL");
   const [aiForm, setAIForm] = useState<AIWatchlistSettings>(defaultAISettings);
+  const [convertingSymbol, setConvertingSymbol] = useState<string | null>(null);
 
   const watchlistsQuery = useQuery({
     queryKey: ["watchlists"],
@@ -312,6 +314,13 @@ export const WatchlistsPage = () => {
                       onClick={() => removeItemMutation.mutate({ watchlistId: selectedWatchlist.id, symbol: item.symbol })}
                     >
                       <X size={10} />
+                    </button>
+                    <button
+                      className="ml-1 text-slate-400 hover:text-violet-400 transition"
+                      onClick={() => setConvertingSymbol(item.symbol)}
+                      title="Add to Portfolio"
+                    >
+                      <PlusCircle size={10} />
                     </button>
                   </span>
                 ))}
@@ -596,6 +605,10 @@ export const WatchlistsPage = () => {
         </Card>
       </div>
       </div>
+      
+      {convertingSymbol && (
+        <PositionEntryModal symbol={convertingSymbol} onClose={() => setConvertingSymbol(null)} />
+      )}
     </div>
   );
 };

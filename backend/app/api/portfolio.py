@@ -27,6 +27,11 @@ async def portfolio_history(days: int = 90, session: AsyncSession = Depends(get_
     return await PortfolioService(session).get_equity_curve(days=days)
 
 
+@router.get("/health")
+async def portfolio_health(session: AsyncSession = Depends(get_db_session)) -> dict:
+    return await PortfolioService(session).health_report()
+
+
 @router.post("")
 async def add_holding(payload: PortfolioHoldingRequest, session: AsyncSession = Depends(get_db_session)) -> dict:
     result = await PortfolioService(session).add_holding(

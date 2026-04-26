@@ -205,6 +205,47 @@ class PortfolioService:
         
         return [{"date": h.date, "total_value": h.total_value, "total_invested": h.total_invested, "unrealized_pnl": h.unrealized_pnl} for h in reversed(history)]
 
+    async def health_report(self) -> dict:
+        holdings = await self.list_holdings()
+        if not holdings:
+            return {"status": "empty", "holdings": []}
+
+        # Fetch SPY benchmark metrics
+        spy_metric = (await self.session.execute(select(StockMetric).where(StockMetric.symbol == "SPY"))).scalar_one_or_none()
+        benchmark_1d = spy_metric.change_1d if spy_metric else 0.0
+
+        health_data = []
+        for holding in holdings:
+            symbol = holding["symbol"]
+            metric = (await self.session.execute(select(StockMetric).where(StockMetric.symbol == symbol))).scalar_one_or_none()
+            if not metric:
+                continue
+
+            # Performance vs benchmark
+            outperformance = (metric.change_1d or 0.0) - benchmark_1d
+            
+            # Technical posture
+            sma_200 = metric.sma_200
+            posture = "Neutral"
+            if sma_200 and metric.price > sma_200:
+                posture = "Bullish (Above 200 SMA)"
+            elif sma_200 and metric.price < sma_200:
+                posture = "Bearish (Below 200 SMA)"
+            
+            health_data.append({
+                "symbol": symbol,
+                "outperformance_vs_spy": round(outperformance, 2),
+                "drawdown_52w_high": round(metric.proximity_52w_high or 0.0, 2),
+                "volatility_atr": round(metric.atr_14 or 0.0, 2),
+                "technical_posture": posture,
+                "rsi_14": round(metric.rsi_14 or 0.0, 2)
+            })
+
+        return {
+            "benchmark_1d": round(benchmark_1d, 2),
+            "holdings": health_data
+        }
+
 def _annualized_return(buy_date: date, invested: float, current_value: float) -> float:
     if invested <= 0 or current_value <= 0:
         return 0.0
