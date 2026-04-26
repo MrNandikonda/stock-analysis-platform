@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 30% 98%;
+    --foreground: 222 35% 12%;
+    --card: 40 25% 99%;
+    --card-foreground: 222 35% 12%;
+    --primary: 222 47% 14%;
+    --primary-foreground: 40 30% 98%;
+    --accent: 28 90% 55%;
+    --accent-foreground: 222 47% 14%;
+    --muted: 220 16% 95%;
+    --muted-foreground: 220 14% 46%;
+    --border: 220 16% 89%;
+    --input: 220 16% 89%;
+    --ring: 28 90% 55%;
+    --bull: 152 60% 36%;
+    --bull-soft: 152 55% 94%;
+    --bear: 0 72% 50%;
+    --bear-soft: 0 75% 96%;
+    --warn: 38 92% 50%;
+    --warn-soft: 42 95% 94%;
+    --info: 214 80% 48%;
+    --info-soft: 214 85% 96%;
+    --gradient-hero: linear-gradient(135deg, hsl(222 47% 14%) 0%, hsl(222 40% 22%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(28 90% 55%) 0%, hsl(12 85% 52%) 100%);
+    --shadow-card: 0 1px 2px hsl(222 47% 14% / 0.04), 0 4px 16px hsl(222 47% 14% / 0.04);
+    --shadow-elevated: 0 8px 32px hsl(222 47% 14% / 0.08), 0 2px 8px hsl(222 47% 14% / 0.04);
+    --radius: 0.625rem;
+  }
+  * { @apply border-border; box-sizing: border-box; }
+  html { @apply bg-background text-foreground; font-feature-settings: "ss01" on, "cv11" on; }
+  body { @apply font-sans text-base leading-relaxed; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, .font-display { font-feature-settings: "ss01" on; letter-spacing: -0.01em; }
+  .font-mono { font-variant-numeric: tabular-nums; }
+}
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-track { @apply bg-muted; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
+}
