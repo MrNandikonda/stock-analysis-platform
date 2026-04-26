@@ -19,6 +19,7 @@ class TechnicalsAgent(BaseSpecialistAgent):
         macd_signal = snapshot.get("macd_signal")
         sma_50 = snapshot.get("sma_50")
         sma_200 = snapshot.get("sma_200")
+        atr_14 = snapshot.get("atr_14")
         updated_at = snapshot.get("updated_at")
 
         bullish: list[str] = []
@@ -53,6 +54,15 @@ class TechnicalsAgent(BaseSpecialistAgent):
                 score -= 10
             elif rsi <= 35:
                 neutral.append("RSI is washed out, which can cut both ways.")
+
+        if atr_14 is not None and price is not None and price > 0:
+            volatility_pct = (atr_14 / price) * 100
+            if volatility_pct > 5.0:
+                bearish.append(f"High historical volatility (ATR is {volatility_pct:.1f}% of price) indicates wide trading swings.")
+                score -= 8
+            elif volatility_pct < 1.5:
+                bullish.append(f"Low historical volatility (ATR is {volatility_pct:.1f}% of price) indicates price stability.")
+                score += 5
 
         if not bullish and not bearish and not neutral:
             neutral.append("Technical signals are incomplete in the local snapshot.")

@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.data_sources.nse_adapter import NSEAdapter
 from app.data_sources.yfinance_adapter import YFinanceAdapter
 from app.models.entities import PriceHistory, Stock, StockMetric, Watchlist, WatchlistItem
-from app.services.indicators import macd, rsi, sma
+from app.services.indicators import atr, macd, rsi, sma
 
 
 class MarketService:
@@ -76,6 +76,7 @@ class MarketService:
                     "rsi_14": rsi(closes, 14),
                     "sma_50": sma(closes, 50),
                     "sma_200": sma(closes, 200),
+                    "atr_14": atr(highs, lows, closes, 14),
                     "updated_at": datetime.now(tz=timezone.utc).replace(tzinfo=None),
                 }
 
@@ -230,6 +231,7 @@ class MarketService:
                     "oi_change": metric.oi_change,
                     "pcr": metric.pcr,
                     "iv": metric.iv,
+                    "atr_14": metric.atr_14,
                     "updated_at": metric.updated_at.isoformat(),
                     "market_cap": stock.market_cap,
                     "sector": stock.sector,

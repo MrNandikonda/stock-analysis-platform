@@ -177,4 +177,5 @@ class StockMetric(Base):
     oi_change: Mapped[float | None] = mapped_column(Float, default=None)
     pcr: Mapped[float | None] = mapped_column(Float, default=None)
     iv: Mapped[float | None] = mapped_column(Float, default=None)
+    atr_14: Mapped[float | None] = mapped_column(Float, default=None)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)

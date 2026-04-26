@@ -47,6 +47,7 @@ COLUMN_MAP: dict[str, Any] = {
     "oi_change": StockMetric.oi_change,
     "pcr": StockMetric.pcr,
     "iv": StockMetric.iv,
+    "atr_14": StockMetric.atr_14,
     "updated_at": StockMetric.updated_at,
 }
 
@@ -201,6 +202,7 @@ class ScreenerService:
             "oi_change": metric.oi_change,
             "pcr": metric.pcr,
             "iv": metric.iv,
+            "atr_14": metric.atr_14,
             "updated_at": metric.updated_at.isoformat() if metric.updated_at else None,
         }
 

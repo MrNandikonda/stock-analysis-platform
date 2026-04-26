@@ -97,3 +97,22 @@ def stochastic(
         return None
     return ((close - lowest_low) / (highest_high - lowest_low)) * 100
 
+
+def atr(highs: list[float], lows: list[float], closes: list[float], period: int = 14) -> float | None:
+    if len(closes) < period or len(highs) < period or len(lows) < period:
+        return None
+    tr_list = [highs[0] - lows[0]]
+    for i in range(1, len(closes)):
+        tr = max(
+            highs[i] - lows[i],
+            abs(highs[i] - closes[i-1]),
+            abs(lows[i] - closes[i-1])
+        )
+        tr_list.append(tr)
+        
+    atr_val = sum(tr_list[:period]) / period
+    for i in range(period, len(tr_list)):
+        atr_val = (atr_val * (period - 1) + tr_list[i]) / period
+        
+    return atr_val
+

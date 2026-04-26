@@ -33,6 +33,7 @@ export interface QuoteItem {
   macd_signal?: number | null;
   sma_50?: number | null;
   sma_200?: number | null;
+  atr_14?: number | null;
   pcr?: number | null;
   iv?: number | null;
   oi_change?: number | null;
