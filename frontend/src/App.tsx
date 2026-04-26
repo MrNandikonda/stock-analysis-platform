@@ -10,6 +10,7 @@ const PortfolioPage = lazy(() => import("@/pages/PortfolioPage").then((m) => ({ 
 const AIDiagnosticsPage = lazy(() => import("@/pages/AIDiagnosticsPage").then((m) => ({ default: m.AIDiagnosticsPage })));
 const ScreenerPage = lazy(() => import("@/pages/ScreenerPage").then((m) => ({ default: m.ScreenerPage })));
 const WatchlistsPage = lazy(() => import("@/pages/WatchlistsPage").then((m) => ({ default: m.WatchlistsPage })));
+const RetailDeskPage = lazy(() => import("@/pages/RetailDeskPage").then((m) => ({ default: m.RetailDeskPage })));
 
 const renderTab = (tab: AppTab) => {
   switch (tab) {
@@ -25,6 +26,8 @@ const renderTab = (tab: AppTab) => {
       return <PortfolioPage />;
     case "news":
       return <NewsPage />;
+    case "desk":
+      return <RetailDeskPage />;
     case "diagnostics":
       return <AIDiagnosticsPage />;
     default:

@@ -9,6 +9,7 @@ import {
   ListFilter,
   Menu,
   Newspaper,
+  Scan,
   Search,
   Sparkles,
   Wallet,
@@ -21,16 +22,17 @@ import { api } from "@/lib/api";
 import type { SearchResult } from "@/lib/types";
 import { useAppStore } from "@/store/useAppStore";
 
-export type AppTab = "dashboard" | "screener" | "charts" | "watchlists" | "portfolio" | "news" | "diagnostics";
+export type AppTab = "dashboard" | "screener" | "charts" | "watchlists" | "portfolio" | "news" | "diagnostics" | "desk";
 
 const TAB_CONFIG: Array<{ id: AppTab; label: string; icon: ReactElement }> = [
-  { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
-  { id: "screener", label: "Screener", icon: <ListFilter size={16} /> },
-  { id: "charts", label: "Charts", icon: <ChartCandlestick size={16} /> },
-  { id: "watchlists", label: "Watchlists", icon: <Waves size={16} /> },
-  { id: "portfolio", label: "Portfolio", icon: <Wallet size={16} /> },
-  { id: "news", label: "News", icon: <Newspaper size={16} /> },
-  { id: "diagnostics", label: "AI Ops", icon: <ActivitySquare size={16} /> },
+  { id: "dashboard",   label: "Dashboard",   icon: <LayoutDashboard size={16} /> },
+  { id: "screener",    label: "Screener",    icon: <ListFilter size={16} /> },
+  { id: "charts",      label: "Charts",      icon: <ChartCandlestick size={16} /> },
+  { id: "watchlists",  label: "Watchlists",  icon: <Waves size={16} /> },
+  { id: "portfolio",   label: "Portfolio",   icon: <Wallet size={16} /> },
+  { id: "news",        label: "News",        icon: <Newspaper size={16} /> },
+  { id: "desk",        label: "Intel Desk",  icon: <Scan size={16} /> },
+  { id: "diagnostics", label: "AI Ops",      icon: <ActivitySquare size={16} /> },
 ];
 
 type AppShellProps = {

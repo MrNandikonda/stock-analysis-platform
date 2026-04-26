@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -24,13 +24,22 @@
     --accent-foreground: 0 0% 100%;
     --bull: 160 84% 35%;
     --bull-foreground: 0 0% 100%;
+    --bull-soft: 152 55% 94%;
     --bear: 343 88% 55%;
     --bear-foreground: 0 0% 100%;
+    --bear-soft: 0 75% 96%;
     --neutral: 220 15% 45%;
     --destructive: 343 88% 55%;
     --destructive-foreground: 0 0% 100%;
     --warning: 38 92% 45%;
     --warning-foreground: 0 0% 100%;
+    --warn: 38 92% 50%;
+    --warn-soft: 42 95% 94%;
+    --info: 214 80% 48%;
+    --info-soft: 214 85% 96%;
+    --desk-navy: 222 47% 14%;
+    --desk-navy-light: 222 40% 22%;
+    --gradient-desk-hero: linear-gradient(135deg, hsl(222 47% 14%) 0%, hsl(222 40% 22%) 100%);
     --border: 220 15% 90%;
     --border-strong: 220 15% 80%;
     --input: 0 0% 100%;

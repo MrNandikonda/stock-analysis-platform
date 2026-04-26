@@ -12,7 +12,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['"Inter"', "system-ui", "sans-serif"],
-        display: ['"Outfit"', "system-ui", "sans-serif"],
+        display: ['"Fraunces"', '"Outfit"', "system-ui", "serif"],
         mono: ['"JetBrains Mono"', "ui-monospace", "monospace"],
       },
       colors: {
@@ -43,11 +43,22 @@ export default {
         bull: {
           DEFAULT: "hsl(var(--bull))",
           foreground: "hsl(var(--bull-foreground))",
+          soft: "hsl(var(--bull-soft))",
         },
         bear: {
           DEFAULT: "hsl(var(--bear))",
           foreground: "hsl(var(--bear-foreground))",
+          soft: "hsl(var(--bear-soft))",
         },
+        warn: {
+          DEFAULT: "hsl(var(--warn))",
+          soft: "hsl(var(--warn-soft))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          soft: "hsl(var(--info-soft))",
+        },
+        "desk-navy": "hsl(var(--desk-navy))",
         neutral: "hsl(var(--neutral))",
         muted: {
           DEFAULT: "hsl(var(--muted))",
