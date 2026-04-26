@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.ai.router import router as ai_router
 from app.ai.services.config_service import AIConfigService
+from app.api.analyst_report import router as analyst_report_router
 from app.api.health import router as health_router
 from app.api.market import router as market_router
 from app.api.news import router as news_router
@@ -189,6 +190,7 @@ async def endpoint_rate_limiter(request: Request, call_next):
 
 app.include_router(health_router, prefix=settings.api_prefix)
 app.include_router(market_router, prefix=settings.api_prefix)
+app.include_router(analyst_report_router, prefix=settings.api_prefix)
 app.include_router(screener_router, prefix=settings.api_prefix)
 app.include_router(watchlist_router, prefix=settings.api_prefix)
 app.include_router(portfolio_router, prefix=settings.api_prefix)

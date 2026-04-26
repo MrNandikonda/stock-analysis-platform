@@ -1,4 +1,5 @@
 import type {
+  AnalystReport,
   Market,
   MarketStatusResponse,
   NewsItem,
@@ -105,6 +106,8 @@ export const api = {
     request<NewsItem[]>(`/news?limit=${limit}${symbols ? `&symbols=${encodeURIComponent(symbols)}` : ""}`),
   searchMarket: (q: string) =>
     request<{ items: import("@/lib/types").SearchResult[] }>(`/market/search?q=${encodeURIComponent(q)}`),
+  getAnalystReport: (symbol: string) =>
+    request<AnalystReport>(`/market/report/${encodeURIComponent(symbol)}`),
   getEarningsCalendar: (symbols?: string) =>
     request<EarningsEvent[]>(`/news/earnings-calendar${symbols ? `?symbols=${encodeURIComponent(symbols)}` : ""}`),
   getAIStatus: () => request<AIStatusResponse>("/ai/status"),

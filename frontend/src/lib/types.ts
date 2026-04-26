@@ -368,3 +368,63 @@ export interface AIDiagnosticsResponse {
   safety_mode: Record<string, boolean>;
   admin_summary: string;
 }
+
+export interface AnalystReport {
+  ticker: string;
+  company_name: string;
+  sector?: string | null;
+  industry?: string | null;
+  exchange: string;
+  generated_at: string;
+  data_freshness: "fresh" | "recent" | "stale" | "missing";
+  error?: string;
+
+  // Price
+  current_price: number;
+  change_1d?: number | null;
+  change_5d?: number | null;
+  change_1m?: number | null;
+  change_1y?: number | null;
+
+  // Technical
+  sma_50?: number | null;
+  sma_200?: number | null;
+  rsi_14?: number | null;
+  rsi_label: string;
+  macd?: number | null;
+  macd_signal?: number | null;
+  atr_14?: number | null;
+  technical_posture: string;
+  technical_trend: string;
+  support_level?: number | null;
+  resistance_level?: number | null;
+  proximity_52w_high?: number | null;
+  proximity_52w_low?: number | null;
+
+  // Fundamentals
+  pe?: number | null;
+  pb?: number | null;
+  peg?: number | null;
+  ev_ebitda?: number | null;
+  profit_margin?: number | null;
+  revenue_growth?: number | null;
+  roe?: number | null;
+  roce?: number | null;
+  debt_equity?: number | null;
+  dividend_yield?: number | null;
+  eps?: number | null;
+  valuation_label: string;
+
+  // Options / volume
+  pcr?: number | null;
+  iv?: number | null;
+  oi_change?: number | null;
+  volume?: number | null;
+  avg_volume_20d?: number | null;
+  volume_spike?: number | null;
+
+  // Derived
+  bull_case: string[];
+  bear_case: string[];
+  risk_score: number;
+}

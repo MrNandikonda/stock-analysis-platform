@@ -5,15 +5,11 @@ import {
   ActivitySquare,
   ArrowLeftRight,
   ChartCandlestick,
-  Cloud,
-  Cpu,
-  Database,
   LayoutDashboard,
   ListFilter,
   Menu,
   Newspaper,
   Search,
-  ShieldCheck,
   Sparkles,
   Wallet,
   Waves,
@@ -203,13 +199,9 @@ export const AppShell = ({ activeTab, onTabChange, children }: AppShellProps) =>
                 {currency}
               </Button>
               <div className="hidden items-center gap-2 xl:flex">
-                <StatusPill tone="ok" pulse icon={<Cloud className="h-3 w-3" />}>Tunnel</StatusPill>
                 <StatusPill tone={aiStatusQuery.data?.ai_analysis_enabled ? "ai" : "warn"} icon={<Sparkles className="h-3 w-3" />}>
                   {aiStatusQuery.data?.ai_analysis_enabled ? "AI Ready" : "AI Off"}
                 </StatusPill>
-                <StatusPill tone="info" icon={<Database className="h-3 w-3" />}>SQLite</StatusPill>
-                <StatusPill tone="info" icon={<Cpu className="h-3 w-3" />}>Self-hosted</StatusPill>
-                <StatusPill tone="warn" icon={<ShieldCheck className="h-3 w-3" />}>Safety</StatusPill>
               </div>
               <div className="border-l border-border pl-3 font-mono text-xs tabular-nums text-muted-foreground">
                 {time} <span className="text-foreground/60">LOCAL</span>

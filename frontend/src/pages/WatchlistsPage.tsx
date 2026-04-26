@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BellPlus, BrainCircuit, FileUp, Play, PlusCircle, Save, Trash2, X } from "lucide-react";
+import { BellPlus, BrainCircuit, FileUp, FileText, Play, PlusCircle, Save, Trash2, X } from "lucide-react";
 
 import { PageHeader } from "@/components/PageHeader";
 import { StatusPill } from "@/components/StatusPill";
 import { PositionEntryModal } from "@/components/PositionEntryModal";
+import { AnalystReportPanel } from "@/components/AnalystReportPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -49,6 +50,7 @@ export const WatchlistsPage = () => {
   const [csvText, setCsvText] = useState("symbol\nRELIANCE\nAAPL");
   const [aiForm, setAIForm] = useState<AIWatchlistSettings>(defaultAISettings);
   const [convertingSymbol, setConvertingSymbol] = useState<string | null>(null);
+  const [reportSymbol, setReportSymbol] = useState<string | null>(null);
 
   const watchlistsQuery = useQuery({
     queryKey: ["watchlists"],
@@ -309,18 +311,25 @@ export const WatchlistsPage = () => {
                   >
                     {item.symbol}
                     <button
+                      className="ml-1 text-slate-400 hover:text-sky-500 transition"
+                      onClick={() => setReportSymbol(item.symbol)}
+                      title="Analyst Report"
+                    >
+                      <FileText size={10} />
+                    </button>
+                    <button
+                      className="ml-0.5 text-slate-400 hover:text-violet-400 transition"
+                      onClick={() => setConvertingSymbol(item.symbol)}
+                      title="Add to Portfolio"
+                    >
+                      <PlusCircle size={10} />
+                    </button>
+                    <button
                       className="ml-0.5 text-slate-400 hover:text-red-400 transition disabled:opacity-40"
                       disabled={removeItemMutation.isPending}
                       onClick={() => removeItemMutation.mutate({ watchlistId: selectedWatchlist.id, symbol: item.symbol })}
                     >
                       <X size={10} />
-                    </button>
-                    <button
-                      className="ml-1 text-slate-400 hover:text-violet-400 transition"
-                      onClick={() => setConvertingSymbol(item.symbol)}
-                      title="Add to Portfolio"
-                    >
-                      <PlusCircle size={10} />
                     </button>
                   </span>
                 ))}
@@ -608,6 +617,9 @@ export const WatchlistsPage = () => {
       
       {convertingSymbol && (
         <PositionEntryModal symbol={convertingSymbol} onClose={() => setConvertingSymbol(null)} />
+      )}
+      {reportSymbol && (
+        <AnalystReportPanel symbol={reportSymbol} onClose={() => setReportSymbol(null)} />
       )}
     </div>
   );
