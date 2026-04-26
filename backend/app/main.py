@@ -36,9 +36,16 @@ logger = logging.getLogger(__name__)
 class RequestBucket:
     tokens: float
     last_refill: float
+    lock: asyncio.Lock
+
+    def __init__(self, tokens: float, last_refill: float):
+        self.tokens = tokens
+        self.last_refill = last_refill
+        self.lock = asyncio.Lock()
 
 
 _request_buckets: dict[str, RequestBucket] = {}
+_bucket_creation_lock = asyncio.Lock()
 
 
 async def _initialize_data() -> None:
@@ -147,25 +154,36 @@ async def endpoint_rate_limiter(request: Request, call_next):
 
     capacity = float(settings.api_rate_limit_per_minute)
     refill_per_second = capacity / 60.0
-    key = request.client.host if request.client else "unknown"
+    
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        key = forwarded_for.split(",")[0].strip()
+    else:
+        key = request.headers.get("X-Real-IP", request.client.host if request.client else "unknown")
+        
     now = time.monotonic()
-    bucket = _request_buckets.get(key)
-    if bucket is None:
-        bucket = RequestBucket(tokens=capacity, last_refill=now)
-        _request_buckets[key] = bucket
+    
+    async with _bucket_creation_lock:
+        bucket = _request_buckets.get(key)
+        if bucket is None:
+            bucket = RequestBucket(tokens=capacity, last_refill=now)
+            _request_buckets[key] = bucket
 
-    elapsed = now - bucket.last_refill
-    bucket.tokens = min(capacity, bucket.tokens + elapsed * refill_per_second)
-    bucket.last_refill = now
+    async with bucket.lock:
+        now = time.monotonic()
+        elapsed = now - bucket.last_refill
+        bucket.tokens = min(capacity, bucket.tokens + elapsed * refill_per_second)
+        bucket.last_refill = now
 
-    if bucket.tokens < 1.0:
-        from starlette.responses import JSONResponse
+        if bucket.tokens < 1.0:
+            from starlette.responses import JSONResponse
 
-        return JSONResponse(
-            status_code=429,
-            content={"detail": "Rate limit exceeded. Please retry shortly."},
-        )
-    bucket.tokens -= 1.0
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Rate limit exceeded. Please retry shortly."},
+            )
+        bucket.tokens -= 1.0
+        
     return await call_next(request)
 
 

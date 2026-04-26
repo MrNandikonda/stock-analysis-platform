@@ -28,76 +28,93 @@ class MarketService:
             query = query.limit(limit)
 
         stocks = (await self.session.execute(query)).scalars().all()
+        stock_data = [(s.symbol, s.exchange) for s in stocks]
         updated = 0
-        for stock in stocks:
-            quote = (
-                await self.nse.get_quote(stock.symbol)
-                if stock.exchange == "NSE"
-                else await self.yfinance.get_quote(stock.symbol, stock.exchange)
-            )
-            if stock.exchange == "NSE":
-                valid_quote = quote.get("source") == "nse" and quote.get("price") not in (None, 0)
-            else:
-                valid_quote = quote.get("source") == "yfinance" and quote.get("price") not in (None, 0)
-            if not valid_quote:
-                continue
-            history = await self.yfinance.get_history(stock.symbol, stock.exchange, period="1y", interval="1d")
-            if not history:
-                continue
+        
+        batch_size = 10
+        for i in range(0, len(stock_data), batch_size):
+            batch = stock_data[i:i + batch_size]
+            metric_payloads = []
+            history_payloads = []
+            
+            for symbol, exchange in batch:
+                quote = (
+                    await self.nse.get_quote(symbol)
+                    if exchange == "NSE"
+                    else await self.yfinance.get_quote(symbol, exchange)
+                )
+                if exchange == "NSE":
+                    valid_quote = quote.get("source") == "nse" and quote.get("price") not in (None, 0)
+                else:
+                    valid_quote = quote.get("source") == "yfinance" and quote.get("price") not in (None, 0)
+                if not valid_quote:
+                    continue
+                history = await self.yfinance.get_history(symbol, exchange, period="1y", interval="1d")
+                if not history:
+                    continue
 
-            closes = [float(item["close"]) for item in history]
-            highs = [float(item["high"]) for item in history]
-            lows = [float(item["low"]) for item in history]
-            volumes = [float(item["volume"]) for item in history]
-            current_price = float(quote["price"])
+                closes = [float(item["close"]) for item in history]
+                highs = [float(item["high"]) for item in history]
+                lows = [float(item["low"]) for item in history]
+                volumes = [float(item["volume"]) for item in history]
+                current_price = float(quote["price"])
 
-            metric_payload = {
-                "symbol": stock.symbol,
-                "exchange": stock.exchange,
-                "price": current_price,
-                "change_1d": quote.get("change_1d"),
-                "change_5d": _period_change(closes, 5),
-                "change_1m": _period_change(closes, 21),
-                "change_3m": _period_change(closes, 63),
-                "change_1y": _period_change(closes, 252),
-                "proximity_52w_high": _proximity(current_price, max(highs) if highs else None),
-                "proximity_52w_low": _proximity(current_price, min(lows) if lows else None),
-                "volume": quote.get("volume", volumes[-1] if volumes else 0.0),
-                "avg_volume_20d": _average(volumes[-20:]),
-                "volume_spike": _volume_spike(quote.get("volume", 0.0), volumes[-20:]),
-                "rsi_14": rsi(closes, 14),
-                "sma_50": sma(closes, 50),
-                "sma_200": sma(closes, 200),
-                "updated_at": datetime.now(tz=timezone.utc).replace(tzinfo=None),
-            }
+                metric_payload = {
+                    "symbol": symbol,
+                    "exchange": exchange,
+                    "price": current_price,
+                    "change_1d": quote.get("change_1d"),
+                    "change_5d": _period_change(closes, 5),
+                    "change_1m": _period_change(closes, 21),
+                    "change_3m": _period_change(closes, 63),
+                    "change_1y": _period_change(closes, 252),
+                    "proximity_52w_high": _proximity(current_price, max(highs) if highs else None),
+                    "proximity_52w_low": _proximity(current_price, min(lows) if lows else None),
+                    "volume": quote.get("volume", volumes[-1] if volumes else 0.0),
+                    "avg_volume_20d": _average(volumes[-20:]),
+                    "volume_spike": _volume_spike(quote.get("volume", 0.0), volumes[-20:]),
+                    "rsi_14": rsi(closes, 14),
+                    "sma_50": sma(closes, 50),
+                    "sma_200": sma(closes, 200),
+                    "updated_at": datetime.now(tz=timezone.utc).replace(tzinfo=None),
+                }
 
-            macd_value, macd_signal = macd(closes)
-            metric_payload["macd"] = macd_value
-            metric_payload["macd_signal"] = macd_signal
+                macd_value, macd_signal = macd(closes)
+                metric_payload["macd"] = macd_value
+                metric_payload["macd_signal"] = macd_signal
 
-            if stock.exchange == "NSE":
-                chain = await self.nse.get_options_chain(stock.symbol)
-                metric_payload["pcr"] = self.nse.calculate_pcr(chain)
-                metric_payload["iv"] = self.nse.calculate_iv(chain)
-                metric_payload["oi_change"] = _oi_change(chain)
+                if exchange == "NSE":
+                    chain = await self.nse.get_options_chain(symbol)
+                    metric_payload["pcr"] = self.nse.calculate_pcr(chain)
+                    metric_payload["iv"] = self.nse.calculate_iv(chain)
+                    metric_payload["oi_change"] = _oi_change(chain)
+                    
+                metric_payloads.append(metric_payload)
 
-            stmt = sqlite_insert(StockMetric).values(**metric_payload)
-            stmt = stmt.on_conflict_do_update(index_elements=["symbol"], set_=metric_payload)
-            await self.session.execute(stmt)
+                latest = history[-1]
+                history_payloads.append({
+                    "symbol": symbol,
+                    "date": latest["date"].replace(tzinfo=None),
+                    "open": float(latest["open"]),
+                    "high": float(latest["high"]),
+                    "low": float(latest["low"]),
+                    "close": float(latest["close"]),
+                    "volume": float(latest["volume"]),
+                })
 
-            latest = history[-1]
-            history_stmt = sqlite_insert(PriceHistory).values(
-                symbol=stock.symbol,
-                date=latest["date"].replace(tzinfo=None),
-                open=float(latest["open"]),
-                high=float(latest["high"]),
-                low=float(latest["low"]),
-                close=float(latest["close"]),
-                volume=float(latest["volume"]),
-            )
-            history_stmt = history_stmt.on_conflict_do_nothing(index_elements=["symbol", "date"])
-            await self.session.execute(history_stmt)
-            updated += 1
+            for mp in metric_payloads:
+                stmt = sqlite_insert(StockMetric).values(**mp)
+                stmt = stmt.on_conflict_do_update(index_elements=["symbol"], set_=mp)
+                await self.session.execute(stmt)
+
+            for hp in history_payloads:
+                history_stmt = sqlite_insert(PriceHistory).values(**hp)
+                history_stmt = history_stmt.on_conflict_do_nothing(index_elements=["symbol", "date"])
+                await self.session.execute(history_stmt)
+            
+            # Commit the batch to avoid holding long transactions
+            await self.session.commit()
+            updated += len(metric_payloads)
 
         return updated
 
@@ -114,32 +131,43 @@ class MarketService:
             query = query.limit(limit)
 
         stocks = (await self.session.execute(query)).scalars().all()
+        stock_data = [(s.symbol, s.exchange) for s in stocks]
         updated = 0
-        for stock in stocks:
-            quote = (
-                await self.nse.get_quote(stock.symbol)
-                if stock.exchange == "NSE"
-                else await self.yfinance.get_quote(stock.symbol, stock.exchange)
-            )
-            if stock.exchange == "NSE":
-                valid_quote = quote.get("source") == "nse" and quote.get("price") not in (None, 0)
-            else:
-                valid_quote = quote.get("source") == "yfinance" and quote.get("price") not in (None, 0)
-            if not valid_quote:
-                continue
-            metric_payload = {
-                "symbol": stock.symbol,
-                "exchange": stock.exchange,
-                "price": float(quote["price"]),
-                "change_1d": quote.get("change_1d"),
-                "volume": quote.get("volume"),
-                "updated_at": datetime.now(tz=timezone.utc).replace(tzinfo=None),
-            }
+        
+        batch_size = 10
+        for i in range(0, len(stock_data), batch_size):
+            batch = stock_data[i:i + batch_size]
+            metric_payloads = []
+            
+            for symbol, exchange in batch:
+                quote = (
+                    await self.nse.get_quote(symbol)
+                    if exchange == "NSE"
+                    else await self.yfinance.get_quote(symbol, exchange)
+                )
+                if exchange == "NSE":
+                    valid_quote = quote.get("source") == "nse" and quote.get("price") not in (None, 0)
+                else:
+                    valid_quote = quote.get("source") == "yfinance" and quote.get("price") not in (None, 0)
+                if not valid_quote:
+                    continue
+                    
+                metric_payloads.append({
+                    "symbol": symbol,
+                    "exchange": exchange,
+                    "price": float(quote["price"]),
+                    "change_1d": quote.get("change_1d"),
+                    "volume": quote.get("volume"),
+                    "updated_at": datetime.now(tz=timezone.utc).replace(tzinfo=None),
+                })
 
-            stmt = sqlite_insert(StockMetric).values(**metric_payload)
-            stmt = stmt.on_conflict_do_update(index_elements=["symbol"], set_=metric_payload)
-            await self.session.execute(stmt)
-            updated += 1
+            for mp in metric_payloads:
+                stmt = sqlite_insert(StockMetric).values(**mp)
+                stmt = stmt.on_conflict_do_update(index_elements=["symbol"], set_=mp)
+                await self.session.execute(stmt)
+                
+            await self.session.commit()
+            updated += len(metric_payloads)
 
         return updated
 
