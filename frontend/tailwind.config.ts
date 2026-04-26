@@ -87,16 +87,16 @@ export default {
         amber: "var(--shadow-amber)",
         cyan: "var(--shadow-cyan)",
         panel: "var(--shadow-panel)",
-        "premium-glow": "0 0 40px -10px rgba(139, 92, 246, 0.4)",
-        "premium-card": "0 8px 32px 0 rgba(0, 0, 0, 0.3)",
+        "premium-glow": "0 0 30px -5px rgba(139, 92, 246, 0.25)",
+        "premium-card": "0 8px 30px 0 rgba(100, 110, 140, 0.15)",
       },
       backgroundImage: {
-        "mesh-gradient": "radial-gradient(circle at 20% 20%, rgba(139,92,246,0.15), transparent 40%), radial-gradient(circle at 80% 0%, rgba(217,70,239,0.15), transparent 40%), radial-gradient(circle at 50% 90%, rgba(0,240,255,0.1), transparent 50%)",
+        "mesh-gradient": "radial-gradient(circle at 20% 20%, rgba(139,92,246,0.08), transparent 40%), radial-gradient(circle at 80% 0%, rgba(217,70,239,0.08), transparent 40%), radial-gradient(circle at 50% 90%, rgba(0,240,255,0.05), transparent 50%)",
         "gradient-amber": "var(--gradient-amber)",
         "gradient-cyan": "var(--gradient-cyan)",
         "gradient-ink": "var(--gradient-ink)",
         "gradient-glass": "var(--gradient-glass)",
-        "gradient-premium": "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)",
+        "gradient-premium": "linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 100%)",
       },
       keyframes: {
         "pulse-dot": {

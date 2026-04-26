@@ -74,7 +74,7 @@ export const DashboardPage = () => {
           <Badge className="mb-4" tone="positive">
             Live public deployment
           </Badge>
-          <h2 className="font-display text-2xl font-semibold text-white sm:text-4xl">
+          <h2 className="font-display text-2xl font-semibold text-slate-900 sm:text-4xl">
             Scan markets, explain moves, and keep watchlists alive.
           </h2>
           <p className="muted mt-3 max-w-2xl text-sm leading-6">
@@ -87,21 +87,21 @@ export const DashboardPage = () => {
             <HeroStat label="AI watchlists" value={`${activeAISummaries}/${watchlistQuery.data?.length ?? 0}`} />
           </div>
         </div>
-        <div className="relative z-10 rounded-[1.35rem] border border-white/10 bg-black/40 backdrop-blur-md p-5 shadow-2xl">
+        <div className="relative z-10 rounded-[1.35rem] border border-black/5 bg-white/60 backdrop-blur-md p-5 shadow-2xl">
           <div className="mb-5 flex items-center gap-2 text-aqua">
             <Radar size={18} />
             <span className="text-sm font-semibold">Signal radar</span>
           </div>
           <div className="space-y-3">
             {topMovers.slice(0, 4).map((item, index) => (
-              <div key={item.symbol} className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition hover:bg-white/[0.04]">
+              <div key={item.symbol} className="rounded-2xl border border-black/5 bg-black/[0.02] p-4 transition hover:bg-black/[0.04]">
                 <div className="flex items-center justify-between">
-                  <span className="font-display text-xl text-white tracking-wide">{item.symbol}</span>
+                  <span className="font-display text-xl text-slate-900 tracking-wide">{item.symbol}</span>
                   <span className={(item.change_1d ?? 0) >= 0 ? "text-emerald-400 font-medium" : "text-rose-400 font-medium"}>
                     {formatNumber(item.change_1d, 2)}%
                   </span>
                 </div>
-                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-aqua to-amber-300"
                     style={{ width: `${Math.min(100, Math.max(12, 35 + Math.abs(item.change_1d ?? 0) * 8 + index * 5))}%` }}
@@ -157,7 +157,7 @@ export const DashboardPage = () => {
       <div className="panel space-y-4 p-5 hover:border-violet-500/30 transition-colors">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-display text-lg text-white">Unified Market Watch</h2>
+            <h2 className="font-display text-lg text-slate-900">Unified Market Watch</h2>
             <p className="muted text-xs">Click symbol to jump into charting view.</p>
           </div>
           <Button variant="outline" disabled={refreshMutation.isPending} onClick={() => refreshMutation.mutate()}>
@@ -169,15 +169,15 @@ export const DashboardPage = () => {
 
       <div className="panel space-y-4 p-5 hover:border-violet-500/30 transition-colors">
         <div>
-          <h2 className="flex items-center gap-2 font-display text-xl text-white">
-            <BrainCircuit size={20} className="text-violet-400" />
+          <h2 className="flex items-center gap-2 font-display text-xl text-slate-900">
+            <BrainCircuit size={20} className="text-violet-600" />
             AI watchlist deck
           </h2>
           <p className="muted text-xs">Unified view for NSE and US symbols.</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {(watchlistQuery.data ?? []).map((watchlist) => (
-            <div key={watchlist.id} className="rounded-2xl border border-slate-300/15 bg-slate-950/35 p-3 transition hover:-translate-y-0.5 hover:border-aqua/30">
+            <div key={watchlist.id} className="rounded-2xl border border-black/5 bg-white/60 p-3 transition hover:-translate-y-0.5 hover:border-violet-400/30">
               {aiSummariesQuery.data?.find((summary) => summary?.watchlist_id === watchlist.id) ? (
                 <div className="mb-2 flex items-center justify-between">
                   <Badge tone="neutral">
@@ -192,10 +192,10 @@ export const DashboardPage = () => {
                 </div>
               ) : null}
               <div className="mb-2 flex items-center justify-between">
-                <h4 className="font-semibold text-slate-100">{watchlist.name}</h4>
+                <h4 className="font-semibold text-slate-900">{watchlist.name}</h4>
                 <Badge>{watchlist.items.length} symbols</Badge>
               </div>
-              <div className="space-y-1 text-xs text-slate-300">
+              <div className="space-y-1 text-xs text-slate-600">
                 {watchlist.items.slice(0, 4).map((item) => (
                   <div key={item.symbol} className="flex items-center justify-between">
                     <button className="text-glacier hover:text-sky-300" onClick={() => setSelectedSymbol(item.symbol)}>
@@ -233,18 +233,18 @@ const MetricCard = ({
 }) => (
   <div className="panel flex items-start justify-between p-5 hover:-translate-y-1">
     <div>
-      <p className="text-xs uppercase tracking-widest text-slate-400 font-medium">{title}</p>
-      <p className="mt-2 font-display text-3xl font-semibold text-white tracking-tight">{value}</p>
+      <p className="text-xs uppercase tracking-widest text-slate-500 font-medium">{title}</p>
+      <p className="mt-2 font-display text-3xl font-semibold text-slate-900 tracking-tight">{value}</p>
       <p className="muted text-xs mt-1">{subtitle}</p>
     </div>
-    <div className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-aqua shadow-inner">{icon}</div>
+    <div className="rounded-xl border border-black/5 bg-black/5 p-2.5 text-violet-600 shadow-inner">{icon}</div>
   </div>
 );
 
 const HeroStat = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-2xl border border-white/5 bg-white/5 backdrop-blur p-4 transition hover:bg-white/10">
-    <p className="text-[10px] uppercase tracking-[0.2em] font-medium text-slate-400">{label}</p>
-    <p className="mt-1.5 font-display text-2xl font-medium text-white">{value}</p>
+  <div className="rounded-2xl border border-black/5 bg-white/40 backdrop-blur p-4 transition hover:bg-white/60">
+    <p className="text-[10px] uppercase tracking-[0.2em] font-medium text-slate-500">{label}</p>
+    <p className="mt-1.5 font-display text-2xl font-medium text-slate-900">{value}</p>
   </div>
 );
 

@@ -100,16 +100,16 @@ export const AppShell = ({ activeTab, onTabChange, children }: AppShellProps) =>
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-white/5 bg-black/60 backdrop-blur-2xl text-sidebar-foreground lg:flex lg:flex-col shadow-2xl">
-        <div className="border-b border-white/5 px-4 py-6">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-black/5 bg-white/70 backdrop-blur-2xl text-sidebar-foreground lg:flex lg:flex-col shadow-2xl">
+        <div className="border-b border-black/5 px-4 py-6">
           <div className="flex items-center gap-3">
             <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-premium-glow">
               <span className="font-display text-lg font-bold text-white">R</span>
               <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-black" />
             </div>
             <div className="min-w-0">
-              <div className="font-display text-lg font-bold tracking-tight text-white">RythuMarket</div>
-              <div className="font-mono text-[10px] uppercase tracking-widest text-violet-300/80 mt-0.5">Intelligence Desk</div>
+              <div className="font-display text-lg font-bold tracking-tight text-slate-900">RythuMarket</div>
+              <div className="font-mono text-[10px] uppercase tracking-widest text-violet-600/80 mt-0.5">Intelligence Desk</div>
             </div>
           </div>
         </div>
@@ -122,13 +122,13 @@ export const AppShell = ({ activeTab, onTabChange, children }: AppShellProps) =>
                 key={tab.id}
                 className={`group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200 ${
                   active
-                    ? "bg-white/10 text-white shadow-inner"
-                    : "text-slate-400 hover:bg-white/5 hover:text-white"
+                    ? "bg-black/5 text-slate-900 shadow-inner"
+                    : "text-slate-500 hover:bg-black/5 hover:text-slate-900"
                 }`}
                 onClick={() => onTabChange(tab.id)}
               >
                 {active ? <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-violet-400 shadow-[0_0_10px_rgba(139,92,246,0.6)]" /> : null}
-                <span className={active ? "text-violet-400" : "text-slate-500 group-hover:text-slate-300 transition-colors"}>{tab.icon}</span>
+                <span className={active ? "text-violet-600" : "text-slate-500 group-hover:text-slate-700 transition-colors"}>{tab.icon}</span>
                 <span className={active ? "font-semibold tracking-wide" : "font-medium tracking-wide"}>{tab.label}</span>
               </button>
             );
@@ -147,7 +147,7 @@ export const AppShell = ({ activeTab, onTabChange, children }: AppShellProps) =>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col relative z-0">
-        <header className="sticky top-0 z-30 h-auto border-b border-white/5 bg-black/40 backdrop-blur-xl lg:h-16">
+        <header className="sticky top-0 z-30 h-auto border-b border-black/5 bg-white/70 backdrop-blur-xl lg:h-16">
           <div className="flex h-full flex-wrap items-center gap-4 px-4 py-3 md:px-6 lg:py-0">
             <div className="flex items-center gap-2 lg:hidden">
               <Menu className="h-4 w-4 text-muted-foreground" />
