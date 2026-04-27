@@ -49,6 +49,7 @@ export const AppShell = ({ activeTab, onTabChange, children }: AppShellProps) =>
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const aiStatusQuery = useQuery({
     queryKey: ["ai-status-header"],
@@ -86,6 +87,17 @@ export const AppShell = ({ activeTab, onTabChange, children }: AppShellProps) =>
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
   }, []);
 
   const handleSearchSelect = (result: SearchResult) => {
@@ -155,6 +167,7 @@ export const AppShell = ({ activeTab, onTabChange, children }: AppShellProps) =>
               <div className="relative w-full" ref={searchRef}>
                 <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                 <input
+                  ref={searchInputRef}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => {

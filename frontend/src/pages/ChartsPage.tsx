@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { CandlestickPanel } from "@/components/CandlestickPanel";
@@ -28,6 +28,11 @@ export const ChartsPage = () => {
   const [symbolInput, setSymbolInput] = useState(selectedSymbol);
   const [exchange, setExchange] = useState("NSE");
   const [timeframe, setTimeframe] = useState("1D");
+
+  // Sync input box when global search changes selectedSymbol
+  useEffect(() => {
+    setSymbolInput(selectedSymbol);
+  }, [selectedSymbol]);
 
   const historyQuery = useQuery({
     queryKey: ["history", selectedSymbol, exchange, timeframe],

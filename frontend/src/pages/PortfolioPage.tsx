@@ -47,6 +47,7 @@ export const PortfolioPage = () => {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["portfolio"] });
       void queryClient.invalidateQueries({ queryKey: ["portfolio-summary"] });
+      void queryClient.invalidateQueries({ queryKey: ["portfolio-health"] });
     },
   });
 
@@ -55,6 +56,7 @@ export const PortfolioPage = () => {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["portfolio"] });
       void queryClient.invalidateQueries({ queryKey: ["portfolio-summary"] });
+      void queryClient.invalidateQueries({ queryKey: ["portfolio-health"] });
     },
   });
 
@@ -65,6 +67,7 @@ export const PortfolioPage = () => {
       setShowCsvImport(false);
       void queryClient.invalidateQueries({ queryKey: ["portfolio"] });
       void queryClient.invalidateQueries({ queryKey: ["portfolio-summary"] });
+      void queryClient.invalidateQueries({ queryKey: ["portfolio-health"] });
     },
   });
 

@@ -6,7 +6,9 @@ import type {
   EarningsEvent,
   OptionsChain,
   PortfolioHolding,
+  PortfolioHistoryPoint,
   PortfolioSummary,
+  SearchResult,
   AIDiagnosticsResponse,
   AIAnalysisListItem,
   AIRunJobResponse,
@@ -99,13 +101,13 @@ export const api = {
   deletePortfolioHolding: (holdingId: number) =>
     request(`/portfolio/${holdingId}`, { method: "DELETE" }),
   getPortfolioHealth: () => request<any>("/portfolio/health"),
-  getPortfolioHistory: (days = 90) => request<import("@/lib/types").PortfolioHistoryPoint[]>(`/portfolio/history?days=${days}`),
+  getPortfolioHistory: (days = 90) => request<PortfolioHistoryPoint[]>(`/portfolio/history?days=${days}`),
   importPortfolioCsv: (csvData: string) =>
     request("/portfolio/import-csv", { method: "POST", body: JSON.stringify({ csv_data: csvData }) }),
   getNews: (symbols?: string, limit = 30) =>
     request<NewsItem[]>(`/news?limit=${limit}${symbols ? `&symbols=${encodeURIComponent(symbols)}` : ""}`),
   searchMarket: (q: string) =>
-    request<{ items: import("@/lib/types").SearchResult[] }>(`/market/search?q=${encodeURIComponent(q)}`),
+    request<{ items: SearchResult[] }>(`/market/search?q=${encodeURIComponent(q)}`),
   getAnalystReport: (symbol: string) =>
     request<AnalystReport>(`/market/report/${encodeURIComponent(symbol)}`),
   getEarningsCalendar: (symbols?: string) =>

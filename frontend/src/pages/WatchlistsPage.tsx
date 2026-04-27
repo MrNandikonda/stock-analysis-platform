@@ -133,12 +133,17 @@ export const WatchlistsPage = () => {
   const createAlertMutation = useMutation({
     mutationFn: ({ symbol, condition, target }: { symbol: string; condition: string; target: number }) =>
       api.createAlert(symbol, condition, target),
+    onSuccess: () => {
+      setAlertSymbol("");
+      setAlertTarget("");
+    },
   });
 
   const importCsvMutation = useMutation({
     mutationFn: ({ watchlistId, csvData }: { watchlistId: number; csvData: string }) =>
       api.importWatchlistCsv(watchlistId, csvData),
     onSuccess: () => {
+      setCsvText("symbol\nRELIANCE\nAAPL");
       void queryClient.invalidateQueries({ queryKey: ["watchlists"] });
     },
   });
@@ -219,7 +224,14 @@ export const WatchlistsPage = () => {
           </button>
         )}
         <div className="flex gap-2">
-          <Input value={newWatchlistName} onChange={(event) => setNewWatchlistName(event.target.value)} placeholder="New watchlist name" />
+          <Input
+            value={newWatchlistName}
+            onChange={(event) => setNewWatchlistName(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && newWatchlistName.trim()) createWatchlistMutation.mutate(newWatchlistName.trim());
+            }}
+            placeholder="New watchlist name"
+          />
           <Button
             className="gap-2"
             onClick={() => {
@@ -476,8 +488,15 @@ export const WatchlistsPage = () => {
             <option value="volume_spike_gt">Volume Spike &gt;</option>
           </Select>
           <Input value={alertTarget} onChange={(event) => setAlertTarget(event.target.value)} placeholder="Target value" />
+          {createAlertMutation.isSuccess && (
+            <p className="text-xs text-emerald-400">Alert created successfully.</p>
+          )}
+          {createAlertMutation.isError && (
+            <p className="text-xs text-red-400">Failed to create alert — check symbol and try again.</p>
+          )}
           <Button
             className="gap-2"
+            disabled={createAlertMutation.isPending || !alertSymbol.trim() || !alertTarget}
             onClick={() =>
               createAlertMutation.mutate({
                 symbol: alertSymbol,
@@ -487,7 +506,7 @@ export const WatchlistsPage = () => {
             }
           >
             <BellPlus size={15} />
-            Create Alert
+            {createAlertMutation.isPending ? "Creating…" : "Create Alert"}
           </Button>
         </Card>
       </div>
