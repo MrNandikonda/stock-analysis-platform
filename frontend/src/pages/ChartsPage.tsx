@@ -67,15 +67,16 @@ export const ChartsPage = () => {
 
       <Card className="panel-elevated grid gap-3 sm:grid-cols-4">
         <Input
+          aria-label="Chart symbol"
           value={symbolInput}
           onChange={(event) => setSymbolInput(event.target.value.toUpperCase())}
           onKeyDown={(event) => { if (event.key === "Enter") onApplySymbol(); }}
         />
-        <Select value={exchange} onChange={(event) => setExchange(event.target.value)}>
+        <Select aria-label="Chart exchange" value={exchange} onChange={(event) => setExchange(event.target.value)}>
           <option value="NSE">NSE</option>
           <option value="US">US</option>
         </Select>
-        <Select value={timeframe} onChange={(event) => setTimeframe(event.target.value)}>
+        <Select aria-label="Chart timeframe" value={timeframe} onChange={(event) => setTimeframe(event.target.value)}>
           {TIMEFRAMES.map((value) => (
             <option key={value} value={value}>
               {value}
@@ -83,7 +84,8 @@ export const ChartsPage = () => {
           ))}
         </Select>
         <button
-          className="rounded-lg bg-sunrise px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+          aria-label={`Load ${symbolInput || selectedSymbol} chart`}
+          className="rounded-lg bg-gradient-to-r from-violet-600 via-fuchsia-600 to-cyan-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-500/25 hover:brightness-110"
           onClick={onApplySymbol}
         >
           Load
@@ -105,14 +107,14 @@ export const ChartsPage = () => {
         </div>
         
         {optionsQuery.data?.rows && optionsQuery.data.rows.length > 0 && (
-          <div className="mt-4 max-h-96 overflow-y-auto overflow-x-auto rounded-md border border-border">
+          <div className="mt-4 max-h-96 overflow-y-auto overflow-x-auto rounded-md border border-violet-200/80 bg-white/70 shadow-sm">
             <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="sticky top-0 z-10 bg-background-elevated text-gray-400 shadow-[0_1px_0_rgba(255,255,255,0.1)]">
+              <thead className="sticky top-0 z-10 bg-gradient-to-r from-violet-700 via-fuchsia-600 to-cyan-600 text-white shadow-md">
                 <tr>
                   <th className="px-3 py-2 font-medium">CE OI</th>
                   <th className="px-3 py-2 font-medium">CE Vol</th>
                   <th className="px-3 py-2 font-medium">CE LTP</th>
-                  <th className="bg-white/5 px-3 py-2 text-center font-bold text-white">Strike</th>
+                  <th className="bg-white/20 px-3 py-2 text-center font-bold text-white">Strike</th>
                   <th className="px-3 py-2 font-medium">PE LTP</th>
                   <th className="px-3 py-2 font-medium">PE Vol</th>
                   <th className="px-3 py-2 font-medium">PE OI</th>
@@ -120,12 +122,12 @@ export const ChartsPage = () => {
               </thead>
               <tbody className="divide-y divide-border">
                 {optionsQuery.data.rows.map((row: any) => (
-                  <tr key={row.strike} className="hover:bg-white/5 transition-colors">
+                  <tr key={row.strike} className="transition-colors odd:bg-violet-50/60 hover:bg-cyan-50/90">
                     <td className="px-3 py-2">{formatNumber(row.ce_oi)}</td>
                     <td className="px-3 py-2">{formatNumber(row.ce_volume)}</td>
-                    <td className="px-3 py-2 text-green-400">{formatNumber(row.ce_ltp, 2)}</td>
-                    <td className="bg-white/5 px-3 py-2 text-center font-bold text-white">{formatNumber(row.strike, 2)}</td>
-                    <td className="px-3 py-2 text-red-400">{formatNumber(row.pe_ltp, 2)}</td>
+                    <td className="px-3 py-2 text-emerald-600">{formatNumber(row.ce_ltp, 2)}</td>
+                    <td className="bg-fuchsia-100/70 px-3 py-2 text-center font-bold text-violet-800">{formatNumber(row.strike, 2)}</td>
+                    <td className="px-3 py-2 text-rose-600">{formatNumber(row.pe_ltp, 2)}</td>
                     <td className="px-3 py-2">{formatNumber(row.pe_volume)}</td>
                     <td className="px-3 py-2">{formatNumber(row.pe_oi)}</td>
                   </tr>
@@ -140,7 +142,7 @@ export const ChartsPage = () => {
 };
 
 const Metric = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-md border border-border bg-background-elevated/60 p-3">
+  <div className="rounded-md border border-violet-200/80 bg-gradient-to-br from-white via-violet-50 to-cyan-50 p-3 shadow-sm">
     <p className="label-eyebrow">{label}</p>
     <p className="mt-1 font-mono text-lg font-semibold text-foreground">{value}</p>
   </div>

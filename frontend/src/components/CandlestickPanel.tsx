@@ -54,12 +54,12 @@ export const CandlestickPanel = ({ symbol, rows }: CandlestickPanelProps) => {
     const chart = createChart(chartRef.current, {
       layout: {
         background: { color: "transparent" },
-        textColor: "#cbd5e1",
+        textColor: "#334155",
         fontFamily: "IBM Plex Sans",
       },
       grid: {
-        vertLines: { color: "rgba(148,163,184,0.15)" },
-        horzLines: { color: "rgba(148,163,184,0.15)" },
+        vertLines: { color: "rgba(124,58,237,0.12)" },
+        horzLines: { color: "rgba(6,182,212,0.12)" },
       },
       rightPriceScale: {
         borderColor: "rgba(148,163,184,0.25)",
@@ -132,11 +132,11 @@ export const CandlestickPanel = ({ symbol, rows }: CandlestickPanelProps) => {
   return (
     <Card className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-display text-lg text-white">{symbol} Technical Chart</h3>
-        <div className="text-xs text-slate-300">Candles + Volume with worker-based indicators</div>
+        <h3 className="font-display text-lg text-foreground">{symbol} Technical Chart</h3>
+        <div className="text-xs text-muted-foreground">Candles + Volume with worker-based indicators</div>
       </div>
-      <div ref={chartRef} className="h-[380px] w-full rounded-xl border border-slate-500/20 bg-slate-900/20" />
-      <div className="grid gap-2 text-xs text-slate-200 sm:grid-cols-4 lg:grid-cols-8">
+      <div ref={chartRef} className="h-[380px] w-full rounded-xl border border-violet-200/80 bg-gradient-to-br from-white via-cyan-50/80 to-fuchsia-50/80 shadow-inner" />
+      <div className="grid gap-2 text-xs text-foreground sm:grid-cols-4 lg:grid-cols-8">
         <IndicatorBox label="SMA 50" value={indicators.sma50} />
         <IndicatorBox label="EMA 20" value={indicators.ema20} />
         <IndicatorBox label="RSI 14" value={indicators.rsi14} />
@@ -151,9 +151,9 @@ export const CandlestickPanel = ({ symbol, rows }: CandlestickPanelProps) => {
 };
 
 const IndicatorBox = ({ label, value }: { label: string; value: number | null }) => (
-  <div className="rounded-lg border border-slate-500/20 bg-slate-900/45 px-3 py-2">
-    <div className="text-[11px] uppercase tracking-wide text-slate-400">{label}</div>
-    <div className="mt-1 text-sm font-semibold text-slate-100">{formatNumber(value, 2)}</div>
+  <div className="rounded-lg border border-violet-200/80 bg-gradient-to-br from-violet-50 via-white to-cyan-50 px-3 py-2 shadow-sm">
+    <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
+    <div className="mt-1 text-sm font-semibold text-foreground">{formatNumber(value, 2)}</div>
   </div>
 );
 

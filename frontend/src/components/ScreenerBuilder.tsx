@@ -75,7 +75,7 @@ export const ScreenerBuilder = ({ filters, onChange }: ScreenerBuilderProps) => 
   return (
     <div className="space-y-3">
       {filters.map((filter, index) => (
-        <div key={`${filter.field}-${index}`} className="grid gap-2 rounded-xl border border-slate-500/25 bg-slate-900/45 p-3 sm:grid-cols-12">
+        <div key={`${filter.field}-${index}`} className="grid gap-2 rounded-xl border border-violet-200/80 bg-gradient-to-r from-violet-50 via-white to-cyan-50 p-3 shadow-sm sm:grid-cols-12">
           <div className="sm:col-span-3">
             <Select value={filter.field} onChange={(event) => update(index, "field", event.target.value)}>
               {FILTER_FIELDS.map((field) => (
@@ -102,7 +102,7 @@ export const ScreenerBuilder = ({ filters, onChange }: ScreenerBuilderProps) => 
             />
           </div>
           <div className="flex items-center justify-end sm:col-span-1">
-            <Button variant="ghost" onClick={() => removeFilter(index)}>
+            <Button variant="ghost" aria-label={`Remove filter ${index + 1}`} onClick={() => removeFilter(index)}>
               <Trash2 size={16} />
             </Button>
           </div>

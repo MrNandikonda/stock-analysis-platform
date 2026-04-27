@@ -13,7 +13,11 @@ import type { QuoteItem } from "@/lib/types";
 import { formatCompact, formatNumber } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 
-export const DashboardPage = () => {
+type DashboardPageProps = {
+  onOpenChart?: () => void;
+};
+
+export const DashboardPage = ({ onOpenChart }: DashboardPageProps) => {
   const queryClient = useQueryClient();
   const { market, currency, setSelectedSymbol } = useAppStore();
   const { streamedQuotes, streamError } = useQuoteStream(market);
@@ -66,6 +70,12 @@ export const DashboardPage = () => {
   const biggestVolumes = [...activeRows].sort((a, b) => (b.volume ?? 0) - (a.volume ?? 0)).slice(0, 5);
   const summaries = aiSummariesQuery.data?.filter(Boolean) ?? [];
   const activeAISummaries = summaries.filter((summary) => summary?.enabled).length;
+  const lastUpdatedLabel = quotesQuery.dataUpdatedAt ? new Date(quotesQuery.dataUpdatedAt).toLocaleTimeString() : "pending";
+
+  const openChartForSymbol = (symbol: string) => {
+    setSelectedSymbol(symbol);
+    onOpenChart?.();
+  };
 
   return (
     <div className="space-y-6">
@@ -81,6 +91,9 @@ export const DashboardPage = () => {
             Your dashboard blends quote polling, SSE updates, AI watchlist summaries, and cached fundamentals into a
             single cockpit that stays light enough for this laptop.
           </p>
+          <p className="mt-2 text-xs font-medium text-violet-700">
+            Research support only: screens and AI context are not investment advice or trade instructions.
+          </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <HeroStat label="Market" value={market} />
             <HeroStat label="Currency" value={currency} />
@@ -90,7 +103,7 @@ export const DashboardPage = () => {
         <div className="relative z-10 rounded-[1.35rem] border border-black/5 bg-white/60 backdrop-blur-md p-5 shadow-2xl">
           <div className="mb-5 flex items-center gap-2 text-aqua">
             <Radar size={18} />
-            <span className="text-sm font-semibold">Signal radar</span>
+            <span className="text-sm font-semibold">Top daily movers</span>
           </div>
           <div className="space-y-3">
             {topMovers.slice(0, 4).map((item, index) => (
@@ -158,20 +171,20 @@ export const DashboardPage = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-display text-lg text-slate-900">Unified Market Watch</h2>
-            <p className="muted text-xs">Click symbol to jump into charting view.</p>
+            <p className="muted text-xs">Click symbol to open charting view · quote snapshot as of {lastUpdatedLabel}.</p>
           </div>
           <Button variant="outline" disabled={refreshMutation.isPending} onClick={() => refreshMutation.mutate()}>
             {refreshMutation.isPending ? "Refreshing..." : "Manual Refresh"}
           </Button>
         </div>
-        <QuotesTable rows={activeRows} onSymbolClick={setSelectedSymbol} />
+        <QuotesTable rows={activeRows} onSymbolClick={openChartForSymbol} />
       </div>
 
       <div className="panel space-y-4 p-5 hover:border-violet-500/30 transition-colors">
         <div>
           <h2 className="flex items-center gap-2 font-display text-xl text-slate-900">
             <BrainCircuit size={20} className="text-violet-600" />
-            AI watchlist deck
+            AI research deck
           </h2>
           <p className="muted text-xs">Unified view for NSE and US symbols.</p>
         </div>
@@ -198,7 +211,7 @@ export const DashboardPage = () => {
               <div className="space-y-1 text-xs text-slate-600">
                 {watchlist.items.slice(0, 4).map((item) => (
                   <div key={item.symbol} className="flex items-center justify-between">
-                    <button className="text-glacier hover:text-sky-300" onClick={() => setSelectedSymbol(item.symbol)}>
+                    <button className="text-glacier hover:text-sky-300" onClick={() => openChartForSymbol(item.symbol)}>
                       {item.symbol}
                     </button>
                     <span className={(item.change_1d ?? 0) >= 0 ? "positive" : "negative"}>
@@ -209,7 +222,7 @@ export const DashboardPage = () => {
               </div>
               {aiSummariesQuery.data?.find((summary) => summary?.watchlist_id === watchlist.id)?.top_bullish_names.length ? (
                 <p className="mt-3 text-[11px] text-slate-400">
-                  Bullish: {aiSummariesQuery.data.find((summary) => summary?.watchlist_id === watchlist.id)?.top_bullish_names.join(", ")}
+                  Constructive screens: {aiSummariesQuery.data.find((summary) => summary?.watchlist_id === watchlist.id)?.top_bullish_names.join(", ")}
                 </p>
               ) : null}
             </div>

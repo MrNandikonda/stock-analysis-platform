@@ -1,26 +1,24 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
+    --background: 220 100% 98%;
     --background-elevated: 0 0% 100%;
-    --foreground: 220 30% 15%;
+    --foreground: 231 46% 13%;
     --card: 0 0% 100%;
     --card-foreground: 220 30% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 220 30% 15%;
-    --primary: 262 83% 58%; /* Violet */
+    --primary: 262 90% 56%; /* Electric violet */
     --primary-foreground: 0 0% 100%;
     --primary-glow: 262 83% 78%;
-    --secondary: 190 100% 45%; /* Aqua */
+    --secondary: 188 96% 43%; /* Aqua */
     --secondary-foreground: 0 0% 100%;
-    --muted: 220 15% 94%;
-    --muted-foreground: 220 15% 45%;
-    --accent: 300 85% 55%; /* Fuchsia */
+    --muted: 238 62% 96%;
+    --muted-foreground: 225 28% 42%;
+    --accent: 316 88% 58%; /* Fuchsia */
     --accent-foreground: 0 0% 100%;
     --bull: 160 84% 35%;
     --bull-foreground: 0 0% 100%;
@@ -42,26 +40,26 @@
     --gradient-desk-hero: linear-gradient(135deg, hsl(222 47% 14%) 0%, hsl(222 40% 22%) 100%);
     --gradient-hero: linear-gradient(135deg, hsl(222 47% 14%) 0%, hsl(222 40% 22%) 52%, hsl(262 55% 28%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(38 96% 56%), hsl(28 92% 50%));
-    --border: 220 15% 90%;
-    --border-strong: 220 15% 80%;
+    --border: 236 50% 88%;
+    --border-strong: 238 42% 76%;
     --input: 0 0% 100%;
     --ring: 262 83% 58%;
     --radius: 0.75rem;
-    --surface-sunken: 220 20% 97%;
-    --gradient-amber: linear-gradient(135deg, hsl(38 96% 56%), hsl(28 92% 50%));
-    --gradient-cyan: linear-gradient(135deg, hsl(188 92% 48%), hsl(200 92% 52%));
-    --gradient-ink: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
-    --gradient-glass: linear-gradient(135deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.05) 100%);
-    --gradient-premium: linear-gradient(135deg, rgba(255,255,255,0.82) 0%, rgba(255,255,255,0.52) 100%);
-    --gradient-grid: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0);
-    --shadow-amber: 0 0 30px -5px rgba(245, 158, 11, 0.3);
-    --shadow-cyan: 0 0 30px -5px rgba(0, 240, 255, 0.3);
-    --shadow-panel: 0 8px 32px 0 rgba(100, 110, 140, 0.15), inset 0 1px 1px 0 rgba(255, 255, 255, 1);
-    --sidebar-background: 210 20% 98%;
-    --sidebar-foreground: 220 30% 30%;
+    --surface-sunken: 238 74% 97%;
+    --gradient-amber: linear-gradient(135deg, hsl(43 96% 56%), hsl(18 96% 58%));
+    --gradient-cyan: linear-gradient(135deg, hsl(188 92% 48%), hsl(217 92% 61%));
+    --gradient-ink: linear-gradient(180deg, hsl(250 100% 99%) 0%, hsl(190 100% 98%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(236,254,255,0.8) 45%, rgba(250,232,255,0.82) 100%);
+    --gradient-premium: linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(224,242,254,0.92) 42%, rgba(245,208,254,0.82) 100%);
+    --gradient-grid: radial-gradient(circle at 1px 1px, rgba(124, 58, 237, 0.10) 1px, transparent 0);
+    --shadow-amber: 0 18px 50px -22px rgba(245, 158, 11, 0.55);
+    --shadow-cyan: 0 18px 50px -22px rgba(6, 182, 212, 0.55);
+    --shadow-panel: 0 20px 60px -30px rgba(79, 70, 229, 0.35), 0 12px 30px -24px rgba(6, 182, 212, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 231 36% 27%;
     --sidebar-primary: 262 83% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 92%;
+    --sidebar-accent: 262 90% 95%;
     --sidebar-accent-foreground: 220 30% 15%;
     --sidebar-border: 220 15% 85%;
     --sidebar-ring: 262 83% 58%;
@@ -86,13 +84,30 @@
     font-family: 'Inter', system-ui, sans-serif;
     font-feature-settings: 'ss01', 'cv02', 'cv11';
     background:
-      radial-gradient(circle at 0% 0%, rgba(139, 92, 246, 0.08), transparent 40%),
-      radial-gradient(circle at 100% 100%, rgba(0, 240, 255, 0.08), transparent 40%),
+      radial-gradient(circle at 8% 4%, rgba(124, 58, 237, 0.24), transparent 34%),
+      radial-gradient(circle at 88% 8%, rgba(236, 72, 153, 0.20), transparent 30%),
+      radial-gradient(circle at 78% 86%, rgba(6, 182, 212, 0.22), transparent 36%),
+      radial-gradient(circle at 16% 88%, rgba(245, 158, 11, 0.14), transparent 30%),
       var(--gradient-grid),
       hsl(var(--background));
-    background-size: auto, auto, 30px 30px, auto;
+    background-size: auto, auto, auto, auto, 34px 34px, auto;
     background-attachment: fixed;
     overflow-x: hidden;
+  }
+  @media (max-width: 768px) {
+    body {
+      background-attachment: scroll;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 
   .font-mono,
@@ -114,10 +129,13 @@
 
 @layer components {
   .panel {
-    @apply rounded-xl border border-black/5 bg-white/70 backdrop-blur-xl shadow-premium-card transition-all duration-300;
+    @apply rounded-xl border backdrop-blur-xl shadow-premium-card transition-all duration-300;
+    background: var(--gradient-glass);
+    border-color: hsl(var(--primary) / 0.16);
   }
   .panel:hover {
-    @apply border-black/10 shadow-premium-glow;
+    border-color: hsl(var(--primary) / 0.34);
+    box-shadow: var(--shadow-panel), 0 0 34px -18px hsl(var(--accent) / 0.55);
   }
   .panel-elevated {
     @apply panel;
@@ -138,7 +156,10 @@
   .glow-amber { box-shadow: var(--shadow-amber); }
   .glow-cyan { box-shadow: var(--shadow-cyan); }
   .data-row {
-    @apply border-b border-border/50 transition-colors hover:bg-muted/40;
+    @apply border-b border-border/50 transition-colors;
+  }
+  .data-row:hover {
+    background: linear-gradient(90deg, hsl(var(--primary) / 0.08), hsl(var(--secondary) / 0.08));
   }
   .pill {
     @apply inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-[11px] uppercase tracking-wider;
@@ -166,7 +187,9 @@
     animation: glow-pulse 6s ease-in-out infinite;
   }
   .beacon-card {
-    @apply rounded-2xl border border-border bg-card shadow-panel;
+    @apply rounded-2xl border shadow-panel;
+    background: var(--gradient-glass);
+    border-color: hsl(var(--primary) / 0.16);
   }
   .beacon-hero {
     background: var(--gradient-hero);
@@ -175,5 +198,34 @@
     background: linear-gradient(90deg, rgba(139,92,246,0.08), rgba(0,240,255,0.08), rgba(217,70,239,0.05));
     border: 1px solid rgba(0,0,0,0.05);
     backdrop-filter: blur(12px);
+  }
+  .panel h1.text-white,
+  .panel h2.text-white,
+  .panel h3.text-white,
+  .panel-elevated h1.text-white,
+  .panel-elevated h2.text-white,
+  .panel-elevated h3.text-white {
+    color: hsl(var(--foreground)) !important;
+  }
+  .panel-elevated .text-slate-100,
+  .panel-elevated .text-slate-200,
+  .panel-elevated .text-slate-300 {
+    color: hsl(var(--foreground) / 0.82) !important;
+  }
+  .panel-elevated .text-slate-400 {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+  .panel-elevated .bg-slate-900\/35,
+  .panel-elevated .bg-slate-900\/45,
+  .panel-elevated .bg-slate-900\/60,
+  .panel-elevated .bg-slate-800\/60 {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--secondary) / 0.12), hsl(var(--accent) / 0.10)) !important;
+    border-color: hsl(var(--primary) / 0.22) !important;
+  }
+  .panel-elevated .border-slate-500\/20,
+  .panel-elevated .border-slate-500\/25,
+  .panel-elevated .border-slate-500\/30,
+  .panel-elevated .border-slate-500\/40 {
+    border-color: hsl(var(--primary) / 0.24) !important;
   }
 }
