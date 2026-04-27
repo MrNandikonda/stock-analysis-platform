@@ -30,7 +30,6 @@ export default defineConfig({
         manualChunks: {
           "react-vendor": ["react", "react-dom"],
           "query-vendor": ["@tanstack/react-query"],
-          "charts-vendor": ["lightweight-charts"],
         } as any,
       },
     },

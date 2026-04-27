@@ -13,11 +13,7 @@ import type { QuoteItem } from "@/lib/types";
 import { formatCompact, formatNumber } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 
-type DashboardPageProps = {
-  onOpenChart?: () => void;
-};
-
-export const DashboardPage = ({ onOpenChart }: DashboardPageProps) => {
+export const DashboardPage = () => {
   const queryClient = useQueryClient();
   const { market, currency, setSelectedSymbol } = useAppStore();
   const { streamedQuotes, streamError } = useQuoteStream(market);
@@ -72,9 +68,8 @@ export const DashboardPage = ({ onOpenChart }: DashboardPageProps) => {
   const activeAISummaries = summaries.filter((summary) => summary?.enabled).length;
   const lastUpdatedLabel = quotesQuery.dataUpdatedAt ? new Date(quotesQuery.dataUpdatedAt).toLocaleTimeString() : "pending";
 
-  const openChartForSymbol = (symbol: string) => {
+  const selectSymbol = (symbol: string) => {
     setSelectedSymbol(symbol);
-    onOpenChart?.();
   };
 
   return (
@@ -171,13 +166,13 @@ export const DashboardPage = ({ onOpenChart }: DashboardPageProps) => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-display text-lg text-slate-900">Unified Market Watch</h2>
-            <p className="muted text-xs">Click symbol to open charting view · quote snapshot as of {lastUpdatedLabel}.</p>
+            <p className="muted text-xs">Quote snapshot as of {lastUpdatedLabel}; click a symbol to keep it selected.</p>
           </div>
           <Button variant="outline" disabled={refreshMutation.isPending} onClick={() => refreshMutation.mutate()}>
             {refreshMutation.isPending ? "Refreshing..." : "Manual Refresh"}
           </Button>
         </div>
-        <QuotesTable rows={activeRows} onSymbolClick={openChartForSymbol} />
+        <QuotesTable rows={activeRows} onSymbolClick={selectSymbol} />
       </div>
 
       <div className="panel space-y-4 p-5 hover:border-violet-500/30 transition-colors">
@@ -211,7 +206,7 @@ export const DashboardPage = ({ onOpenChart }: DashboardPageProps) => {
               <div className="space-y-1 text-xs text-slate-600">
                 {watchlist.items.slice(0, 4).map((item) => (
                   <div key={item.symbol} className="flex items-center justify-between">
-                    <button className="text-glacier hover:text-sky-300" onClick={() => openChartForSymbol(item.symbol)}>
+                    <button className="text-glacier hover:text-sky-300" onClick={() => selectSymbol(item.symbol)}>
                       {item.symbol}
                     </button>
                     <span className={(item.change_1d ?? 0) >= 0 ? "positive" : "negative"}>

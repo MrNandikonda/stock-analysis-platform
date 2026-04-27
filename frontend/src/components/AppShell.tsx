@@ -1,38 +1,27 @@
 import type { KeyboardEvent as ReactKeyboardEvent, ReactElement, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
-  ActivitySquare,
   ArrowLeftRight,
-  ChartCandlestick,
   LayoutDashboard,
-  ListFilter,
   Menu,
   Newspaper,
-  Scan,
   Search,
-  Sparkles,
   Wallet,
   Waves,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { StatusPill } from "@/components/StatusPill";
 import { api } from "@/lib/api";
 import type { SearchResult } from "@/lib/types";
 import { useAppStore } from "@/store/useAppStore";
 
-export type AppTab = "dashboard" | "screener" | "charts" | "watchlists" | "portfolio" | "news" | "diagnostics" | "desk";
+export type AppTab = "dashboard" | "watchlists" | "portfolio" | "news";
 
 const TAB_CONFIG: Array<{ id: AppTab; label: string; icon: ReactElement }> = [
   { id: "dashboard",   label: "Dashboard",   icon: <LayoutDashboard size={16} /> },
-  { id: "screener",    label: "Screener",    icon: <ListFilter size={16} /> },
-  { id: "charts",      label: "Charts",      icon: <ChartCandlestick size={16} /> },
   { id: "watchlists",  label: "Watchlists",  icon: <Waves size={16} /> },
   { id: "portfolio",   label: "Portfolio",   icon: <Wallet size={16} /> },
   { id: "news",        label: "News",        icon: <Newspaper size={16} /> },
-  { id: "desk",        label: "Intel Desk",  icon: <Scan size={16} /> },
-  { id: "diagnostics", label: "AI Ops",      icon: <ActivitySquare size={16} /> },
 ];
 
 type AppShellProps = {
@@ -53,13 +42,6 @@ export const AppShell = ({ activeTab, onTabChange, children }: AppShellProps) =>
   const searchRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const hostLabel = typeof window !== "undefined" ? window.location.host : "local";
-
-  const aiStatusQuery = useQuery({
-    queryKey: ["ai-status-header"],
-    queryFn: api.getAIStatus,
-    staleTime: 120_000,
-    refetchInterval: 120_000,
-  });
 
   useEffect(() => {
     const query = searchQuery.trim();
@@ -118,7 +100,6 @@ export const AppShell = ({ activeTab, onTabChange, children }: AppShellProps) =>
 
   const handleSearchSelect = (result: SearchResult) => {
     setSelectedSymbol(result.symbol);
-    onTabChange("charts");
     setSearchQuery("");
     setSearchResults([]);
     setSearchOpen(false);
@@ -162,7 +143,7 @@ export const AppShell = ({ activeTab, onTabChange, children }: AppShellProps) =>
             </div>
             <div className="min-w-0">
               <div className="bg-gradient-to-r from-violet-700 via-fuchsia-600 to-cyan-600 bg-clip-text font-display text-lg font-bold tracking-tight text-transparent">RythuMarket</div>
-              <div className="font-mono text-[10px] uppercase tracking-widest text-violet-600 mt-0.5">Intelligence Desk</div>
+              <div className="font-mono text-[10px] uppercase tracking-widest text-violet-600 mt-0.5">Market Hub</div>
             </div>
           </div>
         </div>
@@ -270,11 +251,6 @@ export const AppShell = ({ activeTab, onTabChange, children }: AppShellProps) =>
                 <ArrowLeftRight size={13} />
                 {currency}
               </Button>
-              <div className="hidden items-center gap-2 xl:flex">
-                <StatusPill tone={aiStatusQuery.data?.ai_analysis_enabled ? "ai" : "warn"} icon={<Sparkles className="h-3 w-3" />}>
-                  {aiStatusQuery.data?.ai_analysis_enabled ? "AI Ready" : "AI Off"}
-                </StatusPill>
-              </div>
               <div className="border-l border-border pl-3 font-mono text-xs tabular-nums text-muted-foreground">
                 {time} <span className="text-foreground/60">LOCAL</span>
               </div>

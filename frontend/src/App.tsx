@@ -4,32 +4,20 @@ import { AppShell, type AppTab } from "@/components/AppShell";
 import { useAlertNotifications } from "@/hooks/useAlertNotifications";
 import { DashboardPage } from "@/pages/DashboardPage";
 
-const ChartsPage = lazy(() => import("@/pages/ChartsPage").then((m) => ({ default: m.ChartsPage })));
 const NewsPage = lazy(() => import("@/pages/NewsPage").then((m) => ({ default: m.NewsPage })));
 const PortfolioPage = lazy(() => import("@/pages/PortfolioPage").then((m) => ({ default: m.PortfolioPage })));
-const AIDiagnosticsPage = lazy(() => import("@/pages/AIDiagnosticsPage").then((m) => ({ default: m.AIDiagnosticsPage })));
-const ScreenerPage = lazy(() => import("@/pages/ScreenerPage").then((m) => ({ default: m.ScreenerPage })));
 const WatchlistsPage = lazy(() => import("@/pages/WatchlistsPage").then((m) => ({ default: m.WatchlistsPage })));
-const RetailDeskPage = lazy(() => import("@/pages/RetailDeskPage").then((m) => ({ default: m.RetailDeskPage })));
 
-const renderTab = (tab: AppTab, openChart: () => void) => {
+const renderTab = (tab: AppTab) => {
   switch (tab) {
     case "dashboard":
-      return <DashboardPage onOpenChart={openChart} />;
-    case "screener":
-      return <ScreenerPage />;
-    case "charts":
-      return <ChartsPage />;
+      return <DashboardPage />;
     case "watchlists":
       return <WatchlistsPage />;
     case "portfolio":
       return <PortfolioPage />;
     case "news":
       return <NewsPage />;
-    case "desk":
-      return <RetailDeskPage />;
-    case "diagnostics":
-      return <AIDiagnosticsPage />;
     default:
       return <DashboardPage />;
   }
@@ -44,7 +32,7 @@ function App() {
       <Suspense
         fallback={<ModuleFallback />}
       >
-        {renderTab(activeTab, () => setActiveTab("charts"))}
+        {renderTab(activeTab)}
       </Suspense>
     </AppShell>
   );

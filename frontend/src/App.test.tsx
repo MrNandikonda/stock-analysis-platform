@@ -71,5 +71,9 @@ describe("App Component UI", () => {
     renderApp();
     expect(screen.getAllByText(/RythuMarket/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Dashboard/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText("Charts")).not.toBeInTheDocument();
+    expect(screen.queryByText("Screener")).not.toBeInTheDocument();
+    expect(screen.queryByText("Intel Desk")).not.toBeInTheDocument();
+    expect(screen.queryByText("AI Ops")).not.toBeInTheDocument();
   });
 });
