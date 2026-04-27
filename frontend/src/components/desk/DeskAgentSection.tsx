@@ -6,19 +6,19 @@ interface Props {
   agentNumber: number;
   title: string;
   subtitle?: string;
+  icon?: ReactNode;
   badge?: ReactNode;
   children: ReactNode;
   className?: string;
 }
 
-export function DeskAgentSection({ agentLabel, agentNumber, title, subtitle, badge, children, className }: Props) {
+export function DeskAgentSection({ agentLabel, agentNumber, title, subtitle, icon, badge, children, className }: Props) {
   return (
-    <section className={cn("rounded-xl border border-border bg-card shadow-panel overflow-hidden", className)}>
-      <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-4"
-        style={{ background: "linear-gradient(135deg, hsl(222 47% 14%) 0%, hsl(222 40% 22%) 100%)" }}>
+    <section className={cn("beacon-card animate-fade-in overflow-hidden", className)}>
+      <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-4 bg-gradient-hero">
         <div className="flex items-start gap-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 font-mono text-xs font-bold text-white">
-            {agentNumber}
+            {icon ?? agentNumber}
           </div>
           <div>
             <p className="font-sans text-[10px] font-semibold uppercase tracking-widest text-white/50">{agentLabel}</p>

@@ -4,16 +4,16 @@ import { DeskSignalBadge } from "./DeskSignalBadge";
 import type { DeskCIOSummary, Consensus } from "@/lib/desk-types";
 
 function cSig(c: Consensus) {
-  if (c === "Strong Buy" || c === "Buy") return "bull" as const;
-  if (c === "Sell" || c === "Strong Sell") return "bear" as const;
+  if (c === "Constructive") return "bull" as const;
+  if (c === "Cautious") return "bear" as const;
   return "warn" as const;
 }
 
 export function DeskCIOCard({ data }: { data: DeskCIOSummary }) {
-  const total = data.buyCount + data.holdCount + data.sellCount;
+  const total = Math.max(1, data.buyCount + data.holdCount + data.sellCount);
   return (
     <DeskAgentSection agentNumber={1} agentLabel="Chief Investment Officer"
-      title="Executive Summary" subtitle="60-second narrative · consensus · bull/bear thesis"
+      title="Executive Summary" subtitle="60-second narrative · screening posture · bull/bear thesis"
       badge={<DeskSignalBadge signal={cSig(data.consensus)} label={data.consensus} />}>
       <p className="font-sans text-sm leading-relaxed text-foreground/80">{data.narrative}</p>
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -46,10 +46,10 @@ export function DeskCIOCard({ data }: { data: DeskCIOSummary }) {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Users size={13} className="text-muted-foreground" />
-            <span className="font-sans text-xs font-semibold text-foreground">Street Consensus</span>
+            <span className="font-sans text-xs font-semibold text-foreground">Screening Posture</span>
             <DeskSignalBadge signal={cSig(data.consensus)} label={data.consensus} size="sm" />
           </div>
-          <span className="font-mono text-xs text-muted-foreground">{data.analystCount} analysts</span>
+          <span className="font-mono text-xs text-muted-foreground">{data.analystCount} rule-based screen</span>
         </div>
         <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full">
           <div className="bg-bull" style={{ width: `${(data.buyCount / total) * 100}%` }} />
@@ -57,10 +57,10 @@ export function DeskCIOCard({ data }: { data: DeskCIOSummary }) {
           <div className="bg-bear" style={{ width: `${(data.sellCount / total) * 100}%` }} />
         </div>
         <div className="mt-2 flex gap-4 font-sans text-[11px] text-muted-foreground">
-          <span><span className="font-semibold text-bull">{data.buyCount}</span> Buy</span>
-          <span><span className="font-semibold text-warn">{data.holdCount}</span> Hold</span>
-          <span><span className="font-semibold text-bear">{data.sellCount}</span> Sell</span>
-          <span className="ml-auto">Target: <span className="font-semibold text-foreground">{data.priceTarget}</span></span>
+          <span><span className="font-semibold text-bull">{data.buyCount}</span> Constructive</span>
+          <span><span className="font-semibold text-warn">{data.holdCount}</span> Neutral</span>
+          <span><span className="font-semibold text-bear">{data.sellCount}</span> Cautious</span>
+          <span className="ml-auto">Reference: <span className="font-semibold text-foreground">{data.priceTarget}</span></span>
         </div>
         <p className="mt-3 font-sans text-xs text-muted-foreground">{data.consensusRationale}</p>
       </div>

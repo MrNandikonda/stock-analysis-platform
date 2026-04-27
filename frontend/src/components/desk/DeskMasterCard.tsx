@@ -9,11 +9,11 @@ export function DeskMasterCard({ data, ticker }: { data: DeskMasterSynthesis; ti
     <DeskAgentSection agentNumber={5} agentLabel="Master Agent — Final Synthesis"
       title="Risk Score & Dashboard Payload" subtitle="Composite risk · one-line verdict · JSON widget data"
       badge={<DeskSignalBadge signal={deskRiskSignal(data.risk_score)} label={`Risk ${data.risk_score}/10`} />}>
-      <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
-        <div className="shrink-0"><DeskRiskMeter score={data.risk_score} /></div>
+      <div className="grid gap-5 sm:grid-cols-[minmax(220px,0.9fr),1.6fr]">
+        <div className="rounded-xl border border-border bg-surface-sunken p-5"><DeskRiskMeter score={data.risk_score} /></div>
         <div className="flex-1 space-y-3">
           <div className="rounded-lg border border-border bg-muted p-4">
-            <p className="font-sans text-[10px] font-bold uppercase tracking-wider text-muted-foreground">One-Line Verdict</p>
+            <p className="font-sans text-[10px] font-bold uppercase tracking-wider text-muted-foreground">One-Line Research Readout</p>
             <p className="mt-1.5 font-display text-base font-semibold text-foreground leading-snug">{data.one_line_verdict}</p>
           </div>
           <div className="rounded-lg border border-border bg-muted p-4">

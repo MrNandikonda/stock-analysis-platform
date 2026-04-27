@@ -1,20 +1,21 @@
-import { deskSignalColors } from "@/lib/desk-utils";
+import { deskSeverityColors, deskSignalColors } from "@/lib/desk-utils";
 import { cn } from "@/lib/utils";
-import type { DeskSignal } from "@/lib/desk-types";
+import type { DeskSeverity, DeskSignal } from "@/lib/desk-types";
 
 const LABELS: Record<DeskSignal, string> = {
   bull: "Bullish", bear: "Bearish", warn: "Caution", info: "Info", neutral: "Neutral",
 };
 
 interface Props {
-  signal: DeskSignal;
+  signal?: DeskSignal;
+  severity?: DeskSeverity;
   label?: string;
   size?: "sm" | "md";
   dot?: boolean;
 }
 
-export function DeskSignalBadge({ signal, label, size = "md", dot = true }: Props) {
-  const { bg, text, border } = deskSignalColors(signal);
+export function DeskSignalBadge({ signal = "neutral", severity, label, size = "md", dot = true }: Props) {
+  const { bg, text, border } = severity ? deskSeverityColors(severity) : deskSignalColors(signal);
   return (
     <span className={cn(
       "inline-flex items-center gap-1.5 rounded-full border font-sans font-semibold uppercase tracking-wide",
@@ -22,7 +23,7 @@ export function DeskSignalBadge({ signal, label, size = "md", dot = true }: Prop
       bg, text, border,
     )}>
       {dot && <span className="h-1.5 w-1.5 rounded-full bg-current" />}
-      {label ?? LABELS[signal]}
+      {label ?? (severity ? severity : LABELS[signal])}
     </span>
   );
 }

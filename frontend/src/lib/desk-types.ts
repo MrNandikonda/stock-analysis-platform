@@ -1,6 +1,7 @@
 // Desk signal types — used only within the Retail Intelligence Desk page
 export type DeskSignal = "bull" | "bear" | "warn" | "neutral" | "info";
-export type Consensus = "Strong Buy" | "Buy" | "Hold" | "Sell" | "Strong Sell";
+export type DeskSeverity = "high" | "medium" | "low" | "positive";
+export type Consensus = "Constructive" | "Neutral" | "Cautious";
 
 export interface DeskCIOSummary {
   narrative: string;
@@ -26,7 +27,9 @@ export interface DeskFundamentals {
   ev_ebitda: number | null;
   profit_margin: number | null;
   roe: number | null;
+  roce: number | null;
   debt_equity: number | null;
+  dividend_yield: number | null;
   cash_bn: number | null;
   debt_bn: number | null;
   valuation_verdict: string;
@@ -46,6 +49,14 @@ export interface DeskQuant {
   short_interest_pct: number | null;
   days_to_cover: number | null;
   atr14: number | null;
+  proximity_52w_high: number | null;
+  proximity_52w_low: number | null;
+  pcr: number | null;
+  iv: number | null;
+  oi_change: number | null;
+  volume: number | null;
+  avg_volume_20d: number | null;
+  volume_spike: number | null;
   technical_posture: string;
 }
 

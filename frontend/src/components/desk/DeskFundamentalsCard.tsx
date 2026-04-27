@@ -32,15 +32,17 @@ export function DeskFundamentalsCard({ data }: { data: DeskFundamentals }) {
           <Row label="Profit Margin" value={deskPct(data.profit_margin)} tone={data.profit_margin && data.profit_margin > 0.1 ? "bull" : data.profit_margin && data.profit_margin < 0 ? "bear" : undefined} />
           <Row label="EPS (TTM)" value={deskFmt(data.eps_ttm, 2)} />
           <Row label="Return on Equity" value={deskPct(data.roe)} tone={data.roe && data.roe > 0.15 ? "bull" : undefined} />
+          <Row label="Return on Capital" value={deskPct(data.roce)} tone={data.roce && data.roce > 0.12 ? "bull" : undefined} />
           <Row label="Debt / Equity" value={deskFmt(data.debt_equity, 2)} tone={data.debt_equity && data.debt_equity > 1.5 ? "bear" : undefined} />
+          <Row label="Dividend Yield" value={deskPct(data.dividend_yield)} />
         </div>
       </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <div className="rounded-lg border border-border bg-muted p-3">
           <p className="font-sans text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Balance Sheet</p>
           <div className="mt-1.5 flex gap-5">
-            <div><p className="font-mono text-base font-bold text-foreground">${data.cash_bn?.toFixed(1)}B</p><p className="font-sans text-[11px] text-muted-foreground">Cash</p></div>
-            <div><p className="font-mono text-base font-bold text-foreground">${data.debt_bn?.toFixed(1)}B</p><p className="font-sans text-[11px] text-muted-foreground">Debt</p></div>
+            <div><p className="font-mono text-base font-bold text-foreground">{data.cash_bn == null ? "—" : `$${data.cash_bn.toFixed(1)}B`}</p><p className="font-sans text-[11px] text-muted-foreground">Cash</p></div>
+            <div><p className="font-mono text-base font-bold text-foreground">{data.debt_bn == null ? "—" : `$${data.debt_bn.toFixed(1)}B`}</p><p className="font-sans text-[11px] text-muted-foreground">Debt</p></div>
           </div>
           <p className="mt-2 font-sans text-xs text-foreground/75">{data.health_verdict}</p>
         </div>
