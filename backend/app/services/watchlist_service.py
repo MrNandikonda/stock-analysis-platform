@@ -35,14 +35,39 @@ class WatchlistService:
                 metrics = (
                     await self.session.execute(select(StockMetric).where(StockMetric.symbol.in_(symbol_rows)))
                 ).scalars().all()
+                stocks = (
+                    await self.session.execute(select(Stock).where(Stock.symbol.in_(symbol_rows)))
+                ).scalars().all()
                 metric_map = {row.symbol: row for row in metrics}
+                stock_map = {row.symbol: row for row in stocks}
                 for symbol in symbol_rows:
                     metric = metric_map.get(symbol)
+                    stock = stock_map.get(symbol)
                     items.append(
                         {
                             "symbol": symbol,
+                            "name": stock.name if stock else symbol,
+                            "exchange": stock.exchange if stock else (metric.exchange if metric else None),
+                            "asset_type": stock.asset_type if stock else None,
+                            "sector": stock.sector if stock else None,
+                            "industry": stock.industry if stock else None,
+                            "market_cap": stock.market_cap if stock else None,
                             "price": metric.price if metric else None,
                             "change_1d": metric.change_1d if metric else None,
+                            "change_5d": metric.change_5d if metric else None,
+                            "change_1m": metric.change_1m if metric else None,
+                            "volume": metric.volume if metric else None,
+                            "avg_volume_20d": metric.avg_volume_20d if metric else None,
+                            "volume_spike": metric.volume_spike if metric else None,
+                            "pe": metric.pe if metric else None,
+                            "pb": metric.pb if metric else None,
+                            "eps": metric.eps if metric else None,
+                            "rsi_14": metric.rsi_14 if metric else None,
+                            "sma_50": metric.sma_50 if metric else None,
+                            "sma_200": metric.sma_200 if metric else None,
+                            "pcr": metric.pcr if metric else None,
+                            "iv": metric.iv if metric else None,
+                            "atr_14": metric.atr_14 if metric else None,
                             "updated_at": metric.updated_at.isoformat() if metric and metric.updated_at else None,
                         }
                     )

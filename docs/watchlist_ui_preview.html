@@ -1,0 +1,1012 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RythuMarket Watchlist UI Preview</title>
+  <style>
+    :root {
+      --bg: #f6f8ff;
+      --bg-soft: #eef4ff;
+      --panel: rgba(255, 255, 255, 0.88);
+      --panel-strong: #ffffff;
+      --ink: #101828;
+      --muted: #667085;
+      --line: rgba(17, 24, 39, 0.1);
+      --green: #10a66a;
+      --green-soft: #e8fff5;
+      --red: #d9435f;
+      --red-soft: #fff0f3;
+      --amber: #b7791f;
+      --amber-soft: #fff7df;
+      --blue: #2563eb;
+      --blue-soft: #eaf1ff;
+      --violet: #7c3aed;
+      --violet-soft: #f2ebff;
+      --cyan: #0891b2;
+      --shadow: 0 22px 80px rgba(29, 41, 57, 0.14);
+      --radius-xl: 30px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: var(--font);
+      background:
+        radial-gradient(circle at top left, rgba(124, 58, 237, 0.18), transparent 28rem),
+        radial-gradient(circle at top right, rgba(8, 145, 178, 0.18), transparent 26rem),
+        linear-gradient(135deg, #f8fbff 0%, #f2f6ff 46%, #fff8f2 100%);
+    }
+
+    a { color: inherit; }
+
+    .shell {
+      width: min(1500px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 72px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+      gap: 22px;
+      align-items: stretch;
+      margin-bottom: 20px;
+    }
+
+    .hero-card,
+    .panel {
+      border: 1px solid rgba(124, 58, 237, 0.12);
+      background: var(--panel);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .hero-card {
+      padding: 34px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      right: -120px;
+      top: -120px;
+      width: 280px;
+      height: 280px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(16, 166, 106, 0.18), rgba(124, 58, 237, 0.16));
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--violet-soft), var(--blue-soft));
+      color: #512da8;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      max-width: 820px;
+      margin: 20px 0 14px;
+      font-size: clamp(34px, 5vw, 72px);
+      line-height: 0.95;
+      letter-spacing: -0.06em;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+      font-size: clamp(24px, 3vw, 40px);
+      letter-spacing: -0.04em;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .lead {
+      max-width: 800px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.65;
+    }
+
+    .hero-meta {
+      padding: 24px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .meta-row,
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    .label { color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+    .value { font-weight: 850; }
+    .small { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .mono { font-family: var(--mono); }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 12px 0 16px;
+      margin-bottom: 18px;
+      background: linear-gradient(180deg, rgba(246, 248, 255, 0.94), rgba(246, 248, 255, 0.68));
+      backdrop-filter: blur(14px);
+    }
+
+    .nav a {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.8);
+      color: #344054;
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .nav a.featured {
+      border-color: rgba(16, 166, 106, 0.28);
+      background: linear-gradient(135deg, var(--green-soft), #ffffff);
+      color: #08734d;
+    }
+
+    .section {
+      margin-top: 26px;
+      padding: 26px;
+      border-radius: var(--radius-xl);
+      border: 1px solid rgba(17, 24, 39, 0.08);
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow: 0 16px 48px rgba(16, 24, 40, 0.08);
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .tag,
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .tag { border: 1px solid var(--line); background: #fff; color: #475467; }
+    .pill.green { background: var(--green-soft); color: #08734d; }
+    .pill.red { background: var(--red-soft); color: #a8324c; }
+    .pill.amber { background: var(--amber-soft); color: #8a560f; }
+    .pill.blue { background: var(--blue-soft); color: #1d4ed8; }
+    .pill.violet { background: var(--violet-soft); color: #5b21b6; }
+    .pill.gray { background: #f2f4f7; color: #475467; }
+
+    .preview-window {
+      overflow: hidden;
+      border: 1px solid rgba(17, 24, 39, 0.1);
+      border-radius: 28px;
+      background: #fbfdff;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.86);
+    }
+
+    .app-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.86);
+    }
+
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 16px;
+      color: #fff;
+      font-weight: 950;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      box-shadow: 0 10px 30px rgba(124, 58, 237, 0.24);
+    }
+
+    .brand-title { font-size: 18px; font-weight: 900; letter-spacing: -0.03em; }
+    .brand-sub { color: var(--muted); font-size: 12px; }
+
+    .app-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 10px 14px;
+      border: 1px solid rgba(17, 24, 39, 0.1);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 850;
+      box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
+    }
+
+    .btn.primary { border: 0; background: linear-gradient(135deg, var(--green), #0d9488); color: #fff; }
+    .btn.violet { border: 0; background: linear-gradient(135deg, var(--violet), var(--blue)); color: #fff; }
+    .btn.ghost { background: transparent; box-shadow: none; }
+    .btn.danger { color: var(--red); background: var(--red-soft); }
+
+    .watch-tabs {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff, #f8fbff);
+    }
+
+    .watch-tab {
+      flex: 0 0 auto;
+      min-width: 130px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 12px 14px;
+      background: #fff;
+    }
+
+    .watch-tab.active {
+      border-color: rgba(16, 166, 106, 0.32);
+      background: linear-gradient(135deg, var(--green-soft), #fff);
+      box-shadow: 0 12px 28px rgba(16, 166, 106, 0.12);
+    }
+
+    .watch-tab strong { display: block; margin-bottom: 4px; }
+    .watch-tab span { color: var(--muted); font-size: 12px; }
+
+    .layout-b {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 16px;
+      padding: 18px;
+    }
+
+    .main-card,
+    .side-card,
+    .mini-card {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: #fff;
+      box-shadow: 0 10px 30px rgba(16, 24, 40, 0.06);
+    }
+
+    .main-card { overflow: hidden; }
+    .card-head { padding: 18px; border-bottom: 1px solid var(--line); }
+    .card-body { padding: 18px; }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .metric {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fbfdff;
+    }
+
+    .metric .num { margin-top: 6px; font-size: 24px; font-weight: 950; letter-spacing: -0.04em; }
+
+    .composer {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      padding: 12px 16px;
+      color: var(--ink);
+      font: inherit;
+      outline: none;
+    }
+
+    .data-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      background: #fbfdff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(17, 24, 39, 0.07);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: #fbfdff;
+    }
+
+    tr:hover td { background: #f9fbff; }
+    .price { font-weight: 900; }
+    .positive { color: var(--green); font-weight: 900; }
+    .negative { color: var(--red); font-weight: 900; }
+
+    .company-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 210px;
+    }
+
+    .avatar {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #ecfdf5, #eef2ff);
+      color: #08734d;
+      font-weight: 950;
+    }
+
+    .symbol { font-weight: 950; letter-spacing: -0.02em; }
+    .company { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+    .sparkline {
+      width: 110px;
+      height: 34px;
+    }
+
+    .side-stack { display: grid; gap: 14px; }
+    .side-card { padding: 18px; }
+    .side-card .big { font-size: 34px; font-weight: 950; letter-spacing: -0.06em; }
+
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .agent-card {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: #fff;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(16, 24, 40, 0.06);
+    }
+
+    .instrument-list { display: grid; gap: 12px; }
+
+    .instrument {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: #fff;
+      box-shadow: 0 8px 26px rgba(16, 24, 40, 0.05);
+    }
+
+    .instrument.alt { background: linear-gradient(135deg, #fff, #fbfdff); }
+    .instrument h4 { margin: 0 0 4px; font-size: 18px; }
+    .instrument .right { text-align: right; }
+
+    .chip-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+
+    .freshness-grid {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    .status-tiles {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .status-tile {
+      padding: 16px;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .status-tile strong { display: block; font-size: 28px; letter-spacing: -0.05em; }
+
+    .risk-card {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(135deg, #fff, #fbfdff);
+    }
+
+    .risk-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 16px;
+    }
+
+    .factor-list { margin: 12px 0 0; padding-left: 18px; color: #344054; line-height: 1.7; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    .form-panel {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: #fff;
+      padding: 18px;
+    }
+
+    .field { display: grid; gap: 6px; margin-top: 14px; }
+    .field label { font-size: 12px; font-weight: 850; color: #344054; }
+
+    .message {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: var(--blue-soft);
+      color: #1d4ed8;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .deployment-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .command {
+      margin: 12px 0 0;
+      padding: 14px;
+      border-radius: 16px;
+      background: #101828;
+      color: #e4e7ec;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+
+    .hybrid-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 16px;
+    }
+
+    .phone-frame {
+      max-width: 390px;
+      margin: 0 auto;
+      padding: 14px;
+      border-radius: 42px;
+      background: #101828;
+      box-shadow: 0 28px 70px rgba(16, 24, 40, 0.24);
+    }
+
+    .phone-screen {
+      overflow: hidden;
+      border-radius: 32px;
+      background: #f8fbff;
+    }
+
+    .phone-screen .app-topbar { padding: 14px; }
+    .phone-section { padding: 14px; border-bottom: 1px solid var(--line); }
+    .phone-tabs { display: flex; gap: 8px; overflow-x: auto; padding: 12px 14px; }
+    .phone-tabs .watch-tab { min-width: 96px; padding: 10px; }
+
+    .footer-note {
+      margin-top: 26px;
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid rgba(183, 121, 31, 0.18);
+      background: var(--amber-soft);
+      color: #7c4a03;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1100px) {
+      .hero,
+      .layout-b,
+      .freshness-grid,
+      .risk-layout,
+      .form-grid,
+      .hybrid-hero { grid-template-columns: 1fr; }
+      .summary-grid,
+      .deployment-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 20px, 1500px); padding-top: 14px; }
+      .hero-card, .hero-meta, .section { padding: 18px; border-radius: 22px; }
+      .section-title { display: block; }
+      .app-topbar { align-items: flex-start; flex-direction: column; }
+      .layout-b { padding: 12px; }
+      .summary-grid,
+      .agent-grid,
+      .status-tiles,
+      .deployment-grid { grid-template-columns: 1fr; }
+      .composer { flex-direction: column; }
+      table { min-width: 920px; }
+      .table-wrap { overflow-x: auto; }
+      .instrument { grid-template-columns: 1fr; }
+      .instrument .right { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-card">
+        <span class="eyebrow">Preview only · Static HTML · No app code</span>
+        <h1>Watchlists UI preview for every agent concept</h1>
+        <p class="lead">
+          This file shows sample browser previews for each agent direction, with the BACKEND_AGENT
+          data-rich research cards highlighted as the preferred option. It uses generic investing-app
+          UX patterns only and keeps the RythuMarket identity distinct.
+        </p>
+        <div class="chip-row">
+          <span class="pill green">Option B highlighted</span>
+          <span class="pill blue">Research support only</span>
+          <span class="pill violet">No broker execution</span>
+          <span class="pill amber">Cached/freshness-aware data</span>
+        </div>
+      </div>
+      <aside class="hero-meta panel">
+        <div class="meta-row"><span class="label">Favorite direction</span><span class="value">Option B</span></div>
+        <div class="meta-row"><span class="label">Implementation target</span><span class="value">Future review</span></div>
+        <div class="meta-row"><span class="label">Backend scope</span><span class="value">Optional enrichment</span></div>
+        <div class="meta-row"><span class="label">Current task</span><span class="value">HTML preview only</span></div>
+        <p class="small">All prices, metrics, scores, and symbols shown here are sample static preview data.</p>
+      </aside>
+    </section>
+
+    <nav class="nav" aria-label="Preview sections">
+      <a class="featured" href="#option-b">Option B · Backend</a>
+      <a href="#frontend">Frontend</a>
+      <a href="#market-data">Market Data</a>
+      <a href="#quant-risk">Quant/Risk</a>
+      <a href="#qa-security">QA/Security</a>
+      <a href="#devops">DevOps</a>
+      <a href="#hybrid">Hybrid</a>
+      <a href="#mobile">Mobile</a>
+    </nav>
+
+    <section id="option-b" class="section">
+      <div class="section-title">
+        <div>
+          <span class="eyebrow">Option B · BACKEND_AGENT</span>
+          <h2>Data-Rich Research Cards</h2>
+          <p class="lead">Richer rows with company, exchange, sector, fundamentals, technicals, freshness, and AI context. This is the selected favorite and assumes optional backend enrichment from existing SQLite tables.</p>
+        </div>
+        <span class="pill green">Preferred</span>
+      </div>
+
+      <div class="preview-window" aria-label="Option B data-rich desktop preview">
+        <header class="app-topbar">
+          <div class="brand">
+            <div class="brand-mark">R</div>
+            <div>
+              <div class="brand-title">RythuMarket Watch Hub</div>
+              <div class="brand-sub">Data-rich watchlists · cached metrics · research support</div>
+            </div>
+          </div>
+          <div class="app-actions">
+            <button class="btn ghost">NSE open</button>
+            <button class="btn ghost">NYSE pre-market</button>
+            <button class="btn primary">+ Add Symbol</button>
+          </div>
+        </header>
+
+        <div class="watch-tabs">
+          <div class="watch-tab active"><strong>Growth Core</strong><span>12 tracked · 8 fresh</span></div>
+          <div class="watch-tab"><strong>NSE Leaders</strong><span>18 tracked · 14 fresh</span></div>
+          <div class="watch-tab"><strong>US Tech</strong><span>9 tracked · 6 delayed</span></div>
+          <div class="watch-tab"><strong>Dividend Watch</strong><span>7 tracked · 1 stale</span></div>
+        </div>
+
+        <div class="layout-b">
+          <section class="main-card">
+            <div class="card-head">
+              <div class="section-title" style="margin-bottom:0">
+                <div>
+                  <h3>Growth Core</h3>
+                  <p class="small">12 symbols · latest quote 2m ago · enriched from stocks + stock_metrics · no live provider calls on page load.</p>
+                </div>
+                <span class="pill green">8 Fresh</span>
+              </div>
+              <div class="summary-grid">
+                <div class="metric"><span class="label">Tracked</span><div class="num">12</div></div>
+                <div class="metric"><span class="label">Gainers</span><div class="num positive">7</div></div>
+                <div class="metric"><span class="label">Decliners</span><div class="num negative">4</div></div>
+                <div class="metric"><span class="label">Avg confidence</span><div class="num">0.62</div></div>
+              </div>
+              <div class="composer">
+                <input class="input" value="RELIANCE, INFY, AAPL" aria-label="Symbol search or paste" />
+                <button class="btn primary">Validate & Add</button>
+              </div>
+            </div>
+
+            <div class="data-toolbar">
+              <div class="filters">
+                <span class="pill green">Fresh</span>
+                <span class="pill amber">Delayed</span>
+                <span class="pill gray">NSE</span>
+                <span class="pill gray">US</span>
+                <span class="pill violet">Constructive</span>
+              </div>
+              <button class="btn">Refresh cached quotes</button>
+            </div>
+
+            <div class="table-wrap">
+              <table aria-label="Data-rich watchlist rows">
+                <thead>
+                  <tr>
+                    <th>Company</th>
+                    <th>Exchange</th>
+                    <th>Sector</th>
+                    <th>Price</th>
+                    <th>1D</th>
+                    <th>RSI</th>
+                    <th>P/E</th>
+                    <th>Freshness</th>
+                    <th>AI context</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="company-cell"><div class="avatar">R</div><div><div class="symbol">RELIANCE</div><div class="company">Reliance Industries</div></div></div>
+                    </td>
+                    <td><span class="tag">NSE</span></td>
+                    <td>Energy · Conglomerate</td>
+                    <td class="price">₹2,920.15</td>
+                    <td class="positive">+1.24%</td>
+                    <td>58</td>
+                    <td>28.4x</td>
+                    <td><span class="pill green">Fresh · 2m</span></td>
+                    <td><span class="pill violet">Constructive screen</span></td>
+                    <td><button class="btn">Analysis</button></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="company-cell"><div class="avatar">I</div><div><div class="symbol">INFY</div><div class="company">Infosys Limited</div></div></div>
+                    </td>
+                    <td><span class="tag">NSE</span></td>
+                    <td>IT Services</td>
+                    <td class="price">₹1,512.40</td>
+                    <td class="positive">+0.72%</td>
+                    <td>61</td>
+                    <td>24.1x</td>
+                    <td><span class="pill green">Fresh · 3m</span></td>
+                    <td><span class="pill violet">Constructive screen</span></td>
+                    <td><button class="btn">Report</button></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="company-cell"><div class="avatar">A</div><div><div class="symbol">AAPL</div><div class="company">Apple Inc.</div></div></div>
+                    </td>
+                    <td><span class="tag">NASDAQ</span></td>
+                    <td>Technology</td>
+                    <td class="price">$182.20</td>
+                    <td class="negative">-0.42%</td>
+                    <td>49</td>
+                    <td>29.0x</td>
+                    <td><span class="pill amber">Delayed · 9m</span></td>
+                    <td><span class="pill gray">Mixed / watch</span></td>
+                    <td><button class="btn">Alert</button></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="company-cell"><div class="avatar">S</div><div><div class="symbol">SPY</div><div class="company">SPDR S&P 500 ETF</div></div></div>
+                    </td>
+                    <td><span class="tag">NYSEARCA</span></td>
+                    <td>ETF</td>
+                    <td class="price">$516.40</td>
+                    <td class="positive">+0.18%</td>
+                    <td>54</td>
+                    <td>—</td>
+                    <td><span class="pill amber">Delayed · 11m</span></td>
+                    <td><span class="pill blue">Index context</span></td>
+                    <td><button class="btn">Track</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <aside class="side-stack">
+            <div class="side-card">
+              <span class="label">Watchlist signal</span>
+              <div class="big">Mixed</div>
+              <p class="small">Average confidence 0.62 · no investment advice · source freshness lowers certainty.</p>
+              <div class="chip-row"><span class="pill green">8 fresh</span><span class="pill amber">3 delayed</span><span class="pill red">1 stale</span></div>
+            </div>
+            <div class="side-card">
+              <h3>Backend enrichment map</h3>
+              <p class="small">Use joins from existing `stocks`, `stock_metrics`, `fundamentals`, and AI summary tables. No migration for these preview fields.</p>
+              <div class="command">GET /api/v1/watchlists<br/>+ optional item fields<br/>name, exchange, sector, rsi_14, pe, freshness</div>
+            </div>
+            <div class="side-card">
+              <h3>Safe backend rule</h3>
+              <p class="small">Reads stay SQLite-only. No per-row live yfinance/NSE provider calls during page render.</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section id="frontend" class="section">
+      <div class="section-title">
+        <div>
+          <span class="eyebrow">FRONTEND_AGENT</span>
+          <h2>Clean App Cards</h2>
+          <p class="lead">A mobile-first layout where symbols are the hero and advanced actions move into row controls or drawers.</p>
+        </div>
+        <span class="pill blue">Current API friendly</span>
+      </div>
+      <div class="agent-grid">
+        <div class="agent-card">
+          <h3>Desktop card list</h3>
+          <div class="instrument-list">
+            <article class="instrument">
+              <div><h4>RELIANCE</h4><p class="small">Reliance Industries · cached local quote</p><div class="chip-row"><span class="pill green">Fresh</span><span class="pill violet">Constructive screen</span><span class="pill gray">NSE</span></div></div>
+              <div class="right"><div class="price">₹2,920.15</div><div class="positive">+1.24%</div></div>
+            </article>
+            <article class="instrument alt">
+              <div><h4>AAPL</h4><p class="small">Apple Inc. · delayed US quote</p><div class="chip-row"><span class="pill amber">Delayed</span><span class="pill gray">Mixed / watch</span><span class="pill gray">US</span></div></div>
+              <div class="right"><div class="price">$182.20</div><div class="negative">-0.42%</div></div>
+            </article>
+          </div>
+        </div>
+        <div class="agent-card">
+          <h3>UX notes</h3>
+          <p class="small">Recommended controls: sticky watchlist chips, single add composer, row actions for Report / Track / Alert / Remove, and collapsible AI/settings panels.</p>
+          <div class="chip-row"><button class="btn primary">+ Add symbol</button><button class="btn">Import CSV</button><button class="btn">AI settings</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="market-data" class="section">
+      <div class="section-title">
+        <div>
+          <span class="eyebrow">MARKET_DATA_AGENT</span>
+          <h2>Freshness-First Watchlist</h2>
+          <p class="lead">Shows cached, delayed, stale, closed-market, and missing quote states clearly so the UI never implies guaranteed realtime data.</p>
+        </div>
+        <span class="pill amber">Data honesty</span>
+      </div>
+      <div class="freshness-grid">
+        <div class="status-tiles">
+          <div class="status-tile"><span class="label">Fresh</span><strong class="positive">8</strong><p class="small">Updated within 3 minutes.</p></div>
+          <div class="status-tile"><span class="label">Delayed</span><strong>3</strong><p class="small">3–15 minute quote age.</p></div>
+          <div class="status-tile"><span class="label">Stale</span><strong class="negative">1</strong><p class="small">Needs confirmation.</p></div>
+          <div class="status-tile"><span class="label">Missing</span><strong>0</strong><p class="small">No local quote yet.</p></div>
+        </div>
+        <div class="main-card">
+          <div class="card-head"><h3>Data quality board</h3><p class="small">NSE open · NYSE pre-market · quotes are cached snapshots.</p></div>
+          <div class="card-body instrument-list">
+            <article class="instrument"><div><h4>RELIANCE</h4><p class="small">Updated 2m ago · NSE quote snapshot.</p></div><div class="right"><span class="pill green">Fresh</span></div></article>
+            <article class="instrument"><div><h4>AAPL</h4><p class="small">Updated 9m ago · yfinance delayed source.</p></div><div class="right"><span class="pill amber">Delayed</span></div></article>
+            <article class="instrument"><div><h4>XYZ</h4><p class="small">No price available from local cache.</p></div><div class="right"><span class="pill gray">No quote</span></div></article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="quant-risk" class="section">
+      <div class="section-title">
+        <div>
+          <span class="eyebrow">QUANT_RISK_AGENT</span>
+          <h2>Research Triage Board</h2>
+          <p class="lead">Separates raw quotes, derived signals, risk context, and user decisions while avoiding advice-like language.</p>
+        </div>
+        <span class="pill violet">Research-safe</span>
+      </div>
+      <div class="risk-layout">
+        <div class="risk-card">
+          <div class="section-title" style="margin-bottom:0">
+            <div><h3>RELIANCE · Research detail</h3><p class="small">Constructive screen · confidence 0.68 · latest quote fresh.</p></div>
+            <span class="pill green">+1.24%</span>
+          </div>
+          <div class="chip-row"><span class="pill green">Fresh data</span><span class="pill violet">Supportive fundamentals</span><span class="pill amber">Valuation watch</span><span class="pill blue">Event watch</span></div>
+          <ul class="factor-list">
+            <li>Supportive factor: margin trend and recent momentum screen constructively.</li>
+            <li>Risk factor: valuation requires confirmation against peer group.</li>
+            <li>Source health: no stale-data warning on latest run.</li>
+          </ul>
+          <div class="chip-row"><button class="btn violet">View analysis</button><button class="btn">Set research alert</button><button class="btn">Track position</button></div>
+        </div>
+        <div class="side-card">
+          <h3>Signal wording</h3>
+          <p class="small">Use “constructive screen,” “mixed / watch,” and “cautious screen.” Do not use “buy,” “sell,” or “AI recommends.”</p>
+          <div class="message">Alerts are local research notifications, not trade instructions.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="qa-security" class="section">
+      <div class="section-title">
+        <div>
+          <span class="eyebrow">QA_SECURITY_AGENT</span>
+          <h2>Accessible Workflow Board</h2>
+          <p class="lead">Form-focused preview with labels, validation messaging, import preview, and keyboard-friendly actions.</p>
+        </div>
+        <span class="pill blue">Validation first</span>
+      </div>
+      <div class="form-grid">
+        <aside class="form-panel">
+          <h3>Create / add / import</h3>
+          <div class="field"><label for="watch-name">Watchlist name</label><input id="watch-name" class="input" value="Long Term Ideas" /></div>
+          <div class="field"><label for="symbols">Symbols to validate</label><input id="symbols" class="input" value="RELIANCE, AAPL, SPY" /></div>
+          <div class="message" aria-live="polite">3 symbols parsed · 0 duplicates · backend remains authoritative.</div>
+          <div class="chip-row"><button class="btn primary">Validate & Add</button><button class="btn">CSV preview</button></div>
+        </aside>
+        <section class="form-panel">
+          <h3>Accessible selected watchlist</h3>
+          <div class="instrument-list">
+            <article class="instrument"><div><h4>RELIANCE</h4><p class="small">Fresh quote · 44px action targets · icon buttons require accessible names.</p></div><div class="right"><button class="btn">Open actions</button></div></article>
+            <article class="instrument"><div><h4>AAPL</h4><p class="small">Delayed quote · error/success messages use polite live regions.</p></div><div class="right"><button class="btn">Set alert</button></div></article>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section id="devops" class="section">
+      <div class="section-title">
+        <div>
+          <span class="eyebrow">DEVOPS_DOCKER_AGENT</span>
+          <h2>Lightweight Rollout Preview</h2>
+          <p class="lead">A visual reminder that the final Watchlists redesign should remain frontend-first and avoid Docker/nginx changes unless backend/API changes are approved.</p>
+        </div>
+        <span class="pill gray">No infra needed for preview</span>
+      </div>
+      <div class="deployment-grid">
+        <div class="agent-card"><h3>Frontend-only</h3><p class="small">Build and recreate only the frontend container when the future implementation changes React/CSS only.</p><div class="command">docker compose build frontend<br/>docker compose up -d --force-recreate frontend</div></div>
+        <div class="agent-card"><h3>Bundle guard</h3><p class="small">Keep Watchlists chunk lightweight. Avoid new charting libraries or external CDN assets for this redesign.</p><div class="chip-row"><span class="pill green">Static CSS</span><span class="pill blue">No CDN</span></div></div>
+        <div class="agent-card"><h3>Public hosting</h3><p class="small">Watchlists can reveal user interests. Keep backend private and use Basic Auth if exposed publicly.</p><div class="chip-row"><span class="pill amber">Sensitive data</span><span class="pill gray">Local-first</span></div></div>
+      </div>
+    </section>
+
+    <section id="hybrid" class="section">
+      <div class="section-title">
+        <div>
+          <span class="eyebrow">Recommended Hybrid</span>
+          <h2>RythuMarket Data-Rich Watch Hub</h2>
+          <p class="lead">Combines Option B’s richer backend-aware rows with frontend card polish, market-data freshness badges, quant-safe language, QA accessibility, and DevOps-light rollout.</p>
+        </div>
+        <span class="pill green">Best next candidate</span>
+      </div>
+      <div class="hybrid-hero">
+        <div class="main-card">
+          <div class="card-head"><h3>Growth Core · enriched watchlist</h3><p class="small">12 tracked · 7 up · 4 down · latest local quote 2m ago.</p></div>
+          <div class="card-body instrument-list">
+            <article class="instrument">
+              <div><h4>RELIANCE <span class="tag">NSE</span></h4><p class="small">Reliance Industries · Energy · P/E 28.4x · RSI 58</p><div class="chip-row"><span class="pill green">Fresh</span><span class="pill violet">Constructive screen</span><span class="pill amber">Valuation watch</span></div></div>
+              <div class="right"><div class="price">₹2,920.15</div><div class="positive">+1.24%</div></div>
+            </article>
+            <article class="instrument">
+              <div><h4>AAPL <span class="tag">NASDAQ</span></h4><p class="small">Apple Inc. · Technology · P/E 29.0x · RSI 49</p><div class="chip-row"><span class="pill amber">Delayed</span><span class="pill gray">Mixed / watch</span><span class="pill blue">Source moderate</span></div></div>
+              <div class="right"><div class="price">$182.20</div><div class="negative">-0.42%</div></div>
+            </article>
+          </div>
+        </div>
+        <aside class="side-stack">
+          <div class="side-card"><h3>Insight rail</h3><p class="small">Watchlist signal: Mixed / watch. Most constructive: RELIANCE, INFY. Most cautious: TSLA.</p><button class="btn violet">Run AI analysis</button></div>
+          <div class="side-card"><h3>Advanced drawers</h3><div class="chip-row"><span class="pill gray">AI settings</span><span class="pill gray">Alerts</span><span class="pill gray">CSV import</span><span class="pill gray">Rename list</span></div></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="mobile" class="section">
+      <div class="section-title">
+        <div>
+          <span class="eyebrow">Mobile Preview</span>
+          <h2>Compact phone layout</h2>
+          <p class="lead">The same Option B data-rich direction should collapse into stacked cards with thumb-friendly actions and collapsible advanced panels.</p>
+        </div>
+        <span class="pill blue">Responsive</span>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <header class="app-topbar"><div class="brand"><div class="brand-mark">R</div><div><div class="brand-title">Watchlists</div><div class="brand-sub">Research support only</div></div></div></header>
+          <div class="phone-tabs"><div class="watch-tab active"><strong>Growth</strong><span>12</span></div><div class="watch-tab"><strong>NSE</strong><span>18</span></div><div class="watch-tab"><strong>US Tech</strong><span>9</span></div></div>
+          <div class="phone-section"><input class="input" value="Search or paste symbols" aria-label="Mobile symbol search" /><div class="chip-row"><button class="btn primary">+ Add</button><button class="btn">Import</button></div></div>
+          <div class="phone-section instrument-list">
+            <article class="instrument"><div><h4>RELIANCE</h4><p class="small">Reliance Industries · NSE</p><div class="chip-row"><span class="pill green">Fresh</span><span class="pill violet">Constructive</span></div></div><div class="right"><div class="price">₹2,920</div><div class="positive">+1.24%</div></div></article>
+            <article class="instrument"><div><h4>AAPL</h4><p class="small">Apple Inc. · NASDAQ</p><div class="chip-row"><span class="pill amber">Delayed</span><span class="pill gray">Mixed</span></div></div><div class="right"><div class="price">$182.20</div><div class="negative">-0.42%</div></div></article>
+          </div>
+          <div class="phone-section"><div class="stat-row"><span>AI summary</span><strong>▾</strong></div><div class="stat-row"><span>Alerts</span><strong>▾</strong></div><div class="stat-row"><span>Settings</span><strong>▾</strong></div></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer-note">
+      <strong>Preview disclaimer:</strong> This is a static HTML mock for design review. It does not call APIs, does not place trades, does not provide investment advice, and does not change the production application.
+    </div>
+  </main>
+</body>
+</html>

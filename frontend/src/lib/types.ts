@@ -83,8 +83,28 @@ export interface ScreenerQueryPayload {
 
 export interface WatchlistItem {
   symbol: string;
+  name?: string | null;
+  exchange?: string | null;
+  asset_type?: string | null;
+  sector?: string | null;
+  industry?: string | null;
+  market_cap?: number | null;
   price: number | null;
   change_1d: number | null;
+  change_5d?: number | null;
+  change_1m?: number | null;
+  volume?: number | null;
+  avg_volume_20d?: number | null;
+  volume_spike?: number | null;
+  pe?: number | null;
+  pb?: number | null;
+  eps?: number | null;
+  rsi_14?: number | null;
+  sma_50?: number | null;
+  sma_200?: number | null;
+  pcr?: number | null;
+  iv?: number | null;
+  atr_14?: number | null;
   updated_at: string | null;
 }
 
